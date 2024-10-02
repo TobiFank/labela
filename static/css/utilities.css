@@ -1,0 +1,13 @@
+.hidden {
+    display: none;
+}
+
+.text-center {
+    text-align: center;
+}
+
+#status {
+    margin-top: 1rem;
+    font-weight: 600;
+    color: #6366f1;
+}

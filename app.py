@@ -124,5 +124,34 @@ def shutdown():
     os.kill(os.getpid(), signal.SIGINT)
     return jsonify({"message": "Server shutting down..."})
 
+@app.route('/get_prompt')
+def get_prompt():
+    with open('prompts.json', 'r') as f:
+        prompts = json.load(f)
+    return jsonify({'prompt': prompts['openai_api_captioner']['user'] or prompts['openai_api_captioner']['default']})
+
+@app.route('/get_settings')
+def get_settings():
+    with open('settings.json', 'r') as f:
+        settings = json.load(f)
+    return jsonify(settings)
+
+@app.route('/save_settings', methods=['POST'])
+def save_settings():
+    new_settings = request.json
+    with open('settings.json', 'w') as f:
+        json.dump(new_settings, f, indent=2)
+    return jsonify({'message': 'Settings saved successfully'})
+
+@app.route('/reset_settings')
+def reset_settings():
+    default_settings = {
+        'prompt': "I will show you some examples of image captions. Then, I want you to caption a new image in a similar style, focusing ONLY on what you can directly observe in the image. Follow these strict guidelines:\n\n1. Describe the building, its location, and visible surroundings using ONLY factual, objective terms.\n2. State the weather conditions visible in the image without interpretation.\n3. Describe any visible street-level activity or urban elements factually.\n4. If present, describe the geometric facade of the building in detail, focusing on its observable features.\n5. DO NOT use subjective or interpretive language like \"striking,\" \"beautiful,\" \"serene,\" or \"inviting.\"\n6. DO NOT make assumptions about atmosphere, feelings, or anything not directly visible in the image.\n7. DO NOT use flowery or poetic language. Stick to clear, factual descriptions.\n8. Focus solely on what is visible - do not invent or imagine elements not shown in the image.\n\nHere are some example captions:\n\n{example_captions}\n\nNow, caption the new image using ONLY objective, factual descriptions of what you can directly observe. Do not use any subjective or interpretive language. Describe the image as if you are a camera, not a poet or storyteller.",
+        'temperature': 0.7
+    }
+    with open('settings.json', 'w') as f:
+        json.dump(default_settings, f, indent=2)
+    return jsonify(default_settings)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

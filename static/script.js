@@ -150,4 +150,94 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => console.error('Error:', error));
     });
+
+    const settingsButton = document.getElementById('settingsButton');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettings = document.getElementById('closeSettings');
+    const promptEditor = document.getElementById('promptEditor');
+    const temperatureSlider = document.getElementById('temperatureSlider');
+    const temperatureValue = document.getElementById('temperatureValue');
+    const resetSettings = document.getElementById('resetSettings');
+    const saveSettings = document.getElementById('saveSettings');
+
+    let currentSettings = {};
+
+    // Fetch settings when the page loads
+    fetchSettings();
+
+    settingsButton.addEventListener('click', function() {
+        // Ensure settings are up to date when opening the modal
+        fetchSettings().then(() => {
+            settingsModal.classList.remove('hidden');
+        });
+    });
+
+    closeSettings.addEventListener('click', function() {
+        settingsModal.classList.add('hidden');
+    });
+
+    function fetchSettings() {
+        return fetch('/get_settings')
+            .then(response => response.json())
+            .then(data => {
+                currentSettings = data;
+                updateSettingsUI(data);
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function updateSettingsUI(data) {
+        promptEditor.value = data.prompt;
+        temperatureSlider.value = data.temperature;
+        temperatureValue.textContent = data.temperature;
+    }
+
+    temperatureSlider.addEventListener('input', function() {
+        temperatureValue.textContent = this.value;
+    });
+
+    resetSettings.addEventListener('click', function() {
+        fetch('/reset_settings')
+            .then(response => response.json())
+            .then(data => {
+                currentSettings = data;
+                updateSettingsUI(data);
+            })
+            .catch(error => console.error('Error:', error));
+    });
+
+    saveSettings.addEventListener('click', function() {
+        const newSettings = {
+            prompt: promptEditor.value,
+            temperature: parseFloat(temperatureSlider.value)
+        };
+
+        fetch('/save_settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newSettings)
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Settings saved:', data);
+                currentSettings = newSettings;
+                settingsModal.classList.add('hidden');
+            })
+            .catch(error => console.error('Error:', error));
+    });
+
+    // Tab functionality
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab).classList.add('active');
+        });
+    });
 });

@@ -42,22 +42,49 @@ fi
 # Create host directories if they don't exist
 mkdir -p ./example_images ./images_to_caption
 
+# Function to get the latest modification time of files in a directory
+get_latest_mtime() {
+    find "$1" -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-
+}
+
 # Check if the image exists and rebuild if necessary
 if docker image inspect image-captioner >/dev/null 2>&1; then
     echo "Docker image exists. Checking for updates..."
-    # Get the last modification time of the Dockerfile
-    DOCKERFILE_MTIME=$(stat -c %Y Dockerfile)
+
     # Get the creation time of the Docker image
     IMAGE_CTIME=$(docker inspect -f '{{.Created}}' image-captioner | xargs date +%s -d)
+    echo "Image creation time: $(date -d @$IMAGE_CTIME)"
 
-    if [ $DOCKERFILE_MTIME -gt $IMAGE_CTIME ]; then
-        echo "Dockerfile has been modified. Rebuilding the image..."
+    # Get the latest modification time of various components
+    DOCKERFILE_MTIME=$(stat -c %Y Dockerfile)
+    echo "Dockerfile last modified: $(date -d @$DOCKERFILE_MTIME)"
+
+    APP_MTIME=$(get_latest_mtime .)
+    echo "Latest app file modified: $APP_MTIME"
+    APP_MTIME=$(date -d "$(stat -c %y "$APP_MTIME")" +%s)
+    echo "Latest app file modification time: $(date -d @$APP_MTIME)"
+
+    REQUIREMENTS_FILE="requirements.txt"
+    if [ -f "$REQUIREMENTS_FILE" ]; then
+        REQUIREMENTS_MTIME=$(stat -c %Y "$REQUIREMENTS_FILE")
+        echo "Requirements file last modified: $(date -d @$REQUIREMENTS_MTIME)"
+    else
+        REQUIREMENTS_MTIME=0
+        echo "No requirements.txt file found"
+    fi
+
+    # Find the most recent modification time
+    LATEST_MTIME=$(printf "%s\n%s\n%s\n" "$DOCKERFILE_MTIME" "$APP_MTIME" "$REQUIREMENTS_MTIME" | sort -n | tail -1)
+    echo "Most recent modification: $(date -d @$LATEST_MTIME)"
+
+    if [ $LATEST_MTIME -gt $IMAGE_CTIME ]; then
+        echo "Changes detected. Rebuilding the image..."
         if ! docker build -t image-captioner .; then
             echo "Failed to build Docker image. Please check the Dockerfile and try again."
             exit 1
         fi
     else
-        echo "Docker image is up-to-date."
+        echo "Docker image is up-to-date. No rebuild necessary."
     fi
 else
     echo "Docker image doesn't exist. Building the image..."
