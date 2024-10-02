@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Captioner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="container">
+    <div class="glassmorphism">
+        <h1 id="image-captioner" class="text-center">Image Captioner</h1>
+
+        <form id="captionerForm">
+            <div class="form-group">
+                <label for="technique" class="form-label">Technique:</label>
+                <select id="technique" name="technique" class="form-select">
+                    <option value="apikey">OpenAI API</option>
+                    <option value="huggingface">Hugging Face</option>
+                </select>
+            </div>
+
+            <div id="apikeySection" class="form-group">
+                <label for="api_key" class="form-label">API Key:</label>
+                <input type="text" id="api_key" name="api_key" class="form-input" value="{{ config['api_key'] }}">
+            </div>
+
+            <div id="huggingfaceSection" class="form-group hidden">
+                <label for="model" class="form-label">Model:</label>
+                <div class="model-selection">
+                    <select id="model" name="model" class="form-select">
+                        {% for model in config['huggingface_models'] %}
+                        <option value="{{ model }}">{{ model }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="button-group">
+                        <button type="button" id="addModelButton" class="btn btn-secondary">Add</button>
+                        <button type="button" id="removeModelButton" class="btn btn-secondary">Remove</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="quantizedSection" class="form-group hidden">
+                <label>
+                    <input type="checkbox" id="quantized" name="quantized">
+                    Use 4-bit quantization
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label for="trigger" class="form-label">Trigger Word (optional):</label>
+                <input type="text" id="trigger" name="trigger" class="form-input" value="{{ config['trigger_word'] }}">
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Start Captioning</button>
+                <button type="button" id="abortButton" class="btn btn-secondary hidden">Abort</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="status" class="text-center"></div>
+
+    <div class="glassmorphism">
+        <h2>Console Output</h2>
+        <div id="console"></div>
+    </div>
+    <div class="form-group">
+        <button id="shutdownButton" class="btn btn-danger">Shutdown Server</button>
+    </div>
+</div>
+
+<div id="shutdownModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2>Confirm Shutdown</h2>
+        <p>Are you sure you want to shut down the server? This will stop the application and the Docker container.</p>
+        <div class="button-group">
+            <button id="cancelShutdown" class="btn btn-secondary">Cancel</button>
+            <button id="confirmShutdown" class="btn btn-danger">Shutdown</button>
+        </div>
+    </div>
+</div>
+
+<div id="addModelModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2>Add New Model</h2>
+        <div class="form-group">
+            <label for="newModelInput" class="form-label">Model Name:</label>
+            <input type="text" id="newModelInput" class="form-input">
+        </div>
+        <div class="button-group">
+            <button id="cancelAddModel" class="btn btn-secondary">Cancel</button>
+            <button id="confirmAddModel" class="btn btn-primary">Add Model</button>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+/* Main styles */
+body {
+    background: linear-gradient(120deg, #f6f7f8 0%, #e9ebee 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Arial', sans-serif;
+}
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    padding: 2rem;
+}
+
+.glassmorphism {
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Form styles */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.form-input,
+.form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    background-color: white;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus,
+.form-select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    border-color: #6366f1;
+}
+
+.button-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn {
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-primary {
+    background-color: #6366f1;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #4f46e5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.btn-secondary {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+.btn-secondary:hover {
+    background-color: #e5e7eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Model selection styles */
+.model-selection {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.model-selection .form-select {
+    flex-grow: 1;
+}
+
+.model-selection .button-group {
+    flex-shrink: 0;
+}
+
+/* Quantized checkbox styles */
+#quantizedSection label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+#quantizedSection input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
+
+/* Adjust spacing for trigger word input */
+#trigger {
+    max-width: calc(100% - 2rem);
+    margin: 0 1rem;
+}
+
+#newModelInput {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+/* Modal styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+#addModelModal .modal-content {
+    max-width: 400px;
+}
+
+.folder-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    margin-top: 1rem;
+}
+
+.folder-list li {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    color: #333;
+    transition: background-color 0.2s ease;
+}
+
+.folder-list li:hover {
+    background-color: #f3f4f6;
+}
+
+/* Console styles */
+#console {
+    font-family: 'Courier New', Courier, monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    background-color: #1f2937;
+    color: #34d399;
+    padding: 1rem;
+    border-radius: 10px;
+    height: 200px;
+    overflow-y: auto;
+    font-size: 0.85rem;
+}
+
+/* Utility classes */
+.hidden {
+    display: none;
+}
+
+.text-center {
+    text-align: center;
+}
+
+h1, h2 {
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+
+#status {
+    margin-top: 1rem;
+    font-weight: 600;
+    color: #6366f1;
+}
+
+/* Shutdown Modal styles */
+#shutdownModal .modal-content {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+}
+
+#shutdownModal h2 {
+    color: #e53e3e;
+    margin-bottom: 1rem;
+}
+
+#shutdownModal p {
+    margin-bottom: 1.5rem;
+    color: #4a5568;
+}
+
+#shutdownModal .button-group {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+#shutdownModal .btn-danger {
+    background-color: #e53e3e;
+    color: white;
+}
+
+#shutdownModal .btn-danger:hover {
+    background-color: #c53030;
+}
+
+/* Button styles */
+.btn {
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-primary {
+    background-color: #6366f1;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #4f46e5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.btn-secondary {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+.btn-secondary:hover {
+    background-color: #e5e7eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* New styles for the shutdown button */
+.btn-danger {
+    background-color: #dc2626;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #b91c1c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Shutdown Modal styles */
+#shutdownModal .modal-content {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+}
+
+#shutdownModal h2 {
+    color: #dc2626;
+    margin-bottom: 1rem;
+}
+
+#shutdownModal p {
+    margin-bottom: 1.5rem;
+    color: #4a5568;
+}
+
+#shutdownModal .button-group {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
