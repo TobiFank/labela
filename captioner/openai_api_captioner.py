@@ -38,7 +38,12 @@ class OpenAIApiCaptioner(BaseCaptioner):
 
     def create_prompt(self):
         example_captions = "\n\n".join([f"Example Caption: {caption}" for _, caption in self.examples])
-        return self.settings['prompt'].format(example_captions=example_captions)
+        prompts = self.load_prompts()
+        return prompts[self.settings['currentPrompt']]['content'].format(example_captions=example_captions)
+
+    def load_prompts(self):
+        with open('prompts.json', 'r') as f:
+            return json.load(f)
 
     def generate_caption(self, image: Image.Image or str) -> str:
         few_shot_prompt = self.create_prompt()
@@ -70,6 +75,12 @@ class OpenAIApiCaptioner(BaseCaptioner):
 
     def caption_images(self, input_folder: str, output_folder: str, trigger_word: str = None):
         self.settings = self.load_settings()  # Reload settings before captioning
+        print("Captioning images using OpenAI API...")
+        print(f"Temperature: {self.settings['temperature']}")
+        print(f"Trigger word: {trigger_word}")
+        print(f"Prompt Used: {self.settings['currentPrompt']}")
+        print(f"Prompt Content: {self.create_prompt()}")
+        print("#" * 20)
         for filename in os.listdir(input_folder):
             if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
                 image_path = os.path.join(input_folder, filename)
