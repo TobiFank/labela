@@ -14,7 +14,7 @@ if not exist Dockerfile (
 
 :: Check if Docker is installed
 echo Checking if Docker is installed...
-where docker 2>nul
+where docker >nul 2>&1
 if %errorlevel% equ 0 (
     echo Docker is installed.
 ) else (
