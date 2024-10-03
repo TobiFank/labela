@@ -141,9 +141,21 @@ def get_settings():
 @app.route('/save_settings', methods=['POST'])
 def save_settings():
     new_settings = request.json
+    prompts = load_prompts()
+
+    # Update the content of the current prompt
+    current_prompt_key = new_settings['currentPrompt']
+    prompts[current_prompt_key]['content'] = new_settings['prompt']
+
+    # Save updated prompts
+    save_prompts(prompts)
+
+    # Save other settings
     with open('settings.json', 'w') as f:
         json.dump(new_settings, f, indent=2)
+
     return jsonify({'message': 'Settings saved successfully'})
+
 
 @app.route('/reset_settings')
 def reset_settings():
@@ -188,16 +200,8 @@ def save_prompts(prompts):
 
 @app.route('/add_prompt', methods=['POST'])
 def add_prompt():
-    app.logger.info("Received request to add new prompt")
     data = request.json
-    app.logger.info(f"Received data: {data}")
-
-    if not data or 'name' not in data or 'content' not in data:
-        app.logger.error("Invalid data received")
-        return jsonify({"error": "Invalid data"}), 400
-
     prompts = load_prompts()
-    app.logger.info(f"Current prompts before addition: {prompts}")
 
     new_key = data['name'].lower().replace(' ', '_')
     prompts[new_key] = {
@@ -205,14 +209,14 @@ def add_prompt():
         "content": data['content']
     }
 
-    app.logger.info(f"Updated prompts: {prompts}")
+    save_prompts(prompts)
 
-    try:
-        save_prompts(prompts)
-        app.logger.info("Prompts saved successfully")
-    except Exception as e:
-        app.logger.error(f"Error saving prompts: {str(e)}")
-        return jsonify({"error": "Failed to save prompts"}), 500
+    # Update current prompt in settings
+    with open('settings.json', 'r') as f:
+        settings = json.load(f)
+    settings['currentPrompt'] = new_key
+    with open('settings.json', 'w') as f:
+        json.dump(settings, f, indent=2)
 
     return jsonify({"prompts": prompts, "newPromptKey": new_key})
 
