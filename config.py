@@ -9,3 +9,4 @@ OUTPUT_FOLDER = os.path.join(PROJECT_ROOT, "images_to_caption")
 EXAMPLES_FOLDER = os.path.join(PROJECT_ROOT, "example_images")
 
 CONFIG_FILE = os.path.join(PROJECT_ROOT, 'config.json')
+PROMPTS_FILE = os.path.join(PROJECT_ROOT, 'prompts.json')

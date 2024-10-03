@@ -102,6 +102,8 @@ docker rm image-captioner-container >/dev/null 2>&1
 if ! docker run -d -p 5000:5000 \
     -v $(pwd)/example_images:/app/example_images \
     -v $(pwd)/images_to_caption:/app/images_to_caption \
+    -v $(pwd)/prompts.json:/app/prompts.json \
+    -v $(pwd)/settings.json:/app/settings.json \
     -v huggingface_cache:/root/.cache/huggingface \
     --name image-captioner-container \
     --cap-add=SYS_ADMIN \

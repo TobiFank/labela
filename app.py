@@ -7,7 +7,7 @@ import sys
 import threading
 
 from flask import Flask, render_template, request, jsonify, Response
-from config import CONFIG_FILE, INPUT_FOLDER, OUTPUT_FOLDER
+from config import CONFIG_FILE, INPUT_FOLDER, OUTPUT_FOLDER, PROMPTS_FILE
 
 app = Flask(__name__)
 
@@ -134,6 +134,8 @@ def get_prompt():
 def get_settings():
     with open('settings.json', 'r') as f:
         settings = json.load(f)
+    prompts = load_prompts()
+    settings['prompt'] = prompts[settings['currentPrompt']]['content']
     return jsonify(settings)
 
 @app.route('/save_settings', methods=['POST'])
@@ -147,11 +149,128 @@ def save_settings():
 def reset_settings():
     default_settings = {
         'prompt': "I will show you some examples of image captions. Then, I want you to caption a new image in a similar style, focusing ONLY on what you can directly observe in the image. Follow these strict guidelines:\n\n1. Describe the building, its location, and visible surroundings using ONLY factual, objective terms.\n2. State the weather conditions visible in the image without interpretation.\n3. Describe any visible street-level activity or urban elements factually.\n4. If present, describe the geometric facade of the building in detail, focusing on its observable features.\n5. DO NOT use subjective or interpretive language like \"striking,\" \"beautiful,\" \"serene,\" or \"inviting.\"\n6. DO NOT make assumptions about atmosphere, feelings, or anything not directly visible in the image.\n7. DO NOT use flowery or poetic language. Stick to clear, factual descriptions.\n8. Focus solely on what is visible - do not invent or imagine elements not shown in the image.\n\nHere are some example captions:\n\n{example_captions}\n\nNow, caption the new image using ONLY objective, factual descriptions of what you can directly observe. Do not use any subjective or interpretive language. Describe the image as if you are a camera, not a poet or storyteller.",
-        'temperature': 0.7
+        'temperature': 0.7,
+        'currentPrompt': 'default'
     }
     with open('settings.json', 'w') as f:
         json.dump(default_settings, f, indent=2)
     return jsonify(default_settings)
+
+@app.route('/get_prompts')
+def get_prompts():
+    prompts = load_prompts()
+    app.logger.info(f"Loaded prompts: {prompts}")
+    return jsonify(prompts)
+
+def load_prompts():
+    if os.path.exists(PROMPTS_FILE):
+        with open(PROMPTS_FILE, 'r') as f:
+            prompts = json.load(f)
+            app.logger.info(f"Loaded prompts from file: {prompts}")
+            return prompts
+    default_prompts = {
+        "default": {
+            "name": "Default Prompt",
+            "content": "Default prompt content"
+        }
+    }
+    app.logger.info(f"No prompts file found. Using default prompts: {default_prompts}")
+    save_prompts(default_prompts)
+    return default_prompts
+
+def save_prompts(prompts):
+    try:
+        with open(PROMPTS_FILE, 'w') as f:
+            json.dump(prompts, f, indent=2)
+        app.logger.info(f"Prompts saved successfully to {PROMPTS_FILE}")
+    except Exception as e:
+        app.logger.error(f"Error saving prompts to {PROMPTS_FILE}: {str(e)}")
+
+@app.route('/add_prompt', methods=['POST'])
+def add_prompt():
+    app.logger.info("Received request to add new prompt")
+    data = request.json
+    app.logger.info(f"Received data: {data}")
+
+    if not data or 'name' not in data or 'content' not in data:
+        app.logger.error("Invalid data received")
+        return jsonify({"error": "Invalid data"}), 400
+
+    prompts = load_prompts()
+    app.logger.info(f"Current prompts before addition: {prompts}")
+
+    new_key = data['name'].lower().replace(' ', '_')
+    prompts[new_key] = {
+        "name": data['name'],
+        "content": data['content']
+    }
+
+    app.logger.info(f"Updated prompts: {prompts}")
+
+    try:
+        save_prompts(prompts)
+        app.logger.info("Prompts saved successfully")
+    except Exception as e:
+        app.logger.error(f"Error saving prompts: {str(e)}")
+        return jsonify({"error": "Failed to save prompts"}), 500
+
+    return jsonify({"prompts": prompts, "newPromptKey": new_key})
+
+@app.route('/edit_prompt', methods=['POST'])
+def edit_prompt():
+    app.logger.info("Received request to edit prompt")
+    data = request.json
+    app.logger.info(f"Received data: {data}")
+
+    if not data or 'key' not in data or 'content' not in data:
+        app.logger.error("Invalid data received")
+        return jsonify({"error": "Invalid data"}), 400
+
+    prompts = load_prompts()
+    app.logger.info(f"Current prompts before edit: {prompts}")
+
+    if data['key'] not in prompts:
+        app.logger.error(f"Prompt key {data['key']} not found")
+        return jsonify({"error": "Prompt not found"}), 404
+
+    prompts[data['key']]['content'] = data['content']
+
+    app.logger.info(f"Updated prompts after edit: {prompts}")
+
+    save_prompts(prompts)
+
+    return jsonify(prompts)
+
+@app.route('/delete_prompt', methods=['POST'])
+def delete_prompt():
+    app.logger.info("Received request to delete prompt")
+    data = request.json
+    app.logger.info(f"Received data: {data}")
+
+    if not data or 'prompt' not in data:
+        app.logger.error("Invalid data received")
+        return jsonify({"error": "Invalid data"}), 400
+
+    prompt_to_delete = data['prompt']
+
+    if prompt_to_delete == 'default':
+        app.logger.error("Attempted to delete default prompt")
+        return jsonify({"error": "Cannot delete default prompt"}), 400
+
+    prompts = load_prompts()
+    app.logger.info(f"Current prompts before deletion: {prompts}")
+
+    if prompt_to_delete not in prompts:
+        app.logger.error(f"Prompt {prompt_to_delete} not found")
+        return jsonify({"error": "Prompt not found"}), 404
+
+    del prompts[prompt_to_delete]
+
+    app.logger.info(f"Updated prompts after deletion: {prompts}")
+
+    save_prompts(prompts)
+
+    return jsonify(prompts)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

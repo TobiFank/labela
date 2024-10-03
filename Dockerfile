@@ -31,5 +31,8 @@ VOLUME /app/example_images
 VOLUME /app/images_to_caption
 VOLUME /root/.cache/huggingface
 
+COPY prompts.json /app/prompts.json
+COPY settings.json /app/settings.json
+
 # Run app.py when the container launches
 CMD ["python", "app.py"]
