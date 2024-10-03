@@ -63,6 +63,8 @@ echo Starting the Image Captioner container...
 docker run -d -p 5000:5000 ^
     -v "%cd%\example_images:/app/example_images" ^
     -v "%cd%\images_to_caption:/app/images_to_caption" ^
+    -v "%cd%\prompts.json:/app/prompts.json" ^
+    -v "%cd%\settings.json:/app/settings.json" ^
     -v huggingface_cache:/root/.cache/huggingface ^
     --name image-captioner-container ^
     --cap-add=SYS_ADMIN ^
