@@ -8,10 +8,26 @@ export function initCaptioner() {
         e.preventDefault();
         var formData = new FormData(this);
 
-        fetch('/run_captioner', {
-            method: 'POST',
-            body: formData
-        })
+        // Get current settings before sending the captioning request
+        fetch('/get_current_settings?' + new URLSearchParams({
+            technique: formData.get('technique'),
+            model: formData.get('model'),
+            trigger: formData.get('trigger'),
+            quantized: formData.get('quantized')
+        }))
+            .then(response => response.json())
+            .then(currentSettings => {
+                // Add current settings to formData
+                Object.keys(currentSettings).forEach(key => {
+                    formData.append(key, JSON.stringify(currentSettings[key]));
+                });
+
+                // Now proceed with the original captioning request
+                return fetch('/run_captioner', {
+                    method: 'POST',
+                    body: formData
+                });
+            })
             .then(response => response.json())
             .then(data => {
                 console.log(data);

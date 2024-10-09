@@ -1,3 +1,7 @@
+import datetime
+import json
+import os
+
 from captioner.captioner_factory import CaptionerFactory
 from config import INPUT_FOLDER, OUTPUT_FOLDER, EXAMPLES_FOLDER
 
@@ -19,6 +23,24 @@ def main():
         args.api_key,
         args.quantize
     )
+
+    specs = {
+        'timestamp': datetime.datetime.now().isoformat(),
+        'technique': args.technique,
+        'model': args.model,
+        'trigger_word': args.trigger,
+        'temperature': captioner.settings['temperature'],
+        'prompt': captioner.settings['prompt'],
+        'quantized': args.quantize
+    }
+
+    specs_filename = f"caption_specs_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    specs_path = os.path.join(OUTPUT_FOLDER, specs_filename)
+    with open(specs_path, 'w') as f:
+        json.dump(specs, f, indent=2)
+
+    print(f"Specs saved to {specs_filename}")
+
     captioner.caption_images(INPUT_FOLDER, OUTPUT_FOLDER, args.trigger)
 
 if __name__ == "__main__":

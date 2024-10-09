@@ -276,5 +276,22 @@ def delete_prompt():
 
     return jsonify(prompts)
 
+@app.route('/get_current_settings', methods=['GET'])
+def get_current_settings():
+    config = load_config()
+    with open('settings.json', 'r') as f:
+        settings = json.load(f)
+
+    current_settings = {
+        'technique': request.args.get('technique'),
+        'model': request.args.get('model'),
+        'trigger_word': request.args.get('trigger'),
+        'temperature': settings['temperature'],
+        'prompt': settings['prompt'],
+        'quantized': request.args.get('quantized') == 'true'
+    }
+
+    return jsonify(current_settings)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
