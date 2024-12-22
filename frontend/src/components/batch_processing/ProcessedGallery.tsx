@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Edit } from 'lucide-react';
-import { ProcessedItem } from '@/lib/types';
+// frontend/src/components/batch_processing/ProcessedGallery.tsx
+import React, {useState} from 'react';
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Edit} from 'lucide-react';
+import {ProcessedItem} from '@/lib/types';
 
 interface ProcessedGalleryProps {
     items: ProcessedItem[];

@@ -1,0 +1,84 @@
+// frontend/src/lib/api.ts
+import {ExamplePair, ProcessedItem, PromptTemplate} from './types';
+
+class ApiClient {
+    private baseUrl: string = '/api';
+
+    async generateCaption(image: File, examples: ExamplePair[]): Promise<string> {
+        const formData = new FormData();
+        formData.append('image', image);
+        formData.append('examples', JSON.stringify(examples));
+
+        const response = await fetch(`${this.baseUrl}/generate-caption`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate caption');
+        }
+
+        const data = await response.json();
+        return data.caption;
+    }
+
+    async startBatchProcessing(folder: string): Promise<void> {
+        const response = await fetch(`${this.baseUrl}/batch-process`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({folder}),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to start batch processing');
+        }
+    }
+
+    async stopBatchProcessing(): Promise<void> {
+        await fetch(`${this.baseUrl}/batch-process/stop`, {method: 'POST'});
+    }
+
+    async getProcessingStatus(): Promise<{
+        progress: number;
+        processedItems: ProcessedItem[];
+        status: string;
+    }> {
+        const response = await fetch(`${this.baseUrl}/batch-process/status`);
+        return response.json();
+    }
+
+    async savePromptTemplate(template: PromptTemplate): Promise<void> {
+        const response = await fetch(`${this.baseUrl}/prompt-templates`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(template),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to save prompt template');
+        }
+    }
+
+    async uploadExamplePair(image: File, caption: string): Promise<ExamplePair> {
+        const formData = new FormData();
+        formData.append('image', image);
+        formData.append('caption', caption);
+
+        const response = await fetch(`${this.baseUrl}/examples`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to upload example pair');
+        }
+
+        return response.json();
+    }
+}
+
+export const api = new ApiClient();
