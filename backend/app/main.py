@@ -27,7 +27,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/examples", StaticFiles(directory="data/examples"), name="examples")
 
 @app.post("/generate-caption", response_model=CaptionResponse)
 async def generate_caption(
@@ -100,22 +99,17 @@ async def list_examples():
     return caption_service.get_caption_service().load_examples()
 
 
-@app.delete("/examples/{example_id}")
-async def delete_example(example_id: int):
-    return caption_service.get_caption_service().delete_example(example_id)
-
-
 @app.put("/captions/{item_id}")
 async def update_caption(item_id: int, caption: str = Body(...)):
     return caption_service.get_caption_service().update_caption(item_id, caption)
 
+
 @app.delete("/examples/{example_id}")
 async def remove_example(example_id: int):
-    try:
-        await caption_service.get_caption_service().remove_example(example_id)
-        return {"message": "Example removed successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    success = await caption_service.get_caption_service().remove_example(example_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Example not found")
+    return {"message": "Example removed successfully"}
 
 
 @app.put("/processed-items/{item_id}/caption")
@@ -169,7 +163,10 @@ async def delete_prompt_template(template_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 caption_service.initialize_service()
+
+app.mount("/examples", StaticFiles(directory="data/examples"), name="examples")
 
 if __name__ == "__main__":
     import uvicorn

@@ -249,6 +249,32 @@ class CaptionService:
                 for ex in db_examples
             ]
 
+    async def remove_example(self, example_id: int) -> bool:
+        """Removes an example and its associated image file from both DB and filesystem"""
+        with SessionLocal() as db:
+            try:
+                # First get the example to find the image path
+                example = db.query(DBExample).filter(DBExample.id == example_id).first()
+                if not example:
+                    return False
+
+                # Store the image path before deleting from DB
+                image_path = example.image_path
+
+                # Delete from database
+                db.query(DBExample).filter(DBExample.id == example_id).delete()
+                db.commit()
+
+                # Delete the image file if it exists
+                if os.path.exists(image_path):
+                    os.remove(image_path)
+
+                return True
+            except Exception as e:
+                db.rollback()
+                print(f"Error removing example: {e}")
+                raise RuntimeError(f"Failed to remove example: {str(e)}")
+
     def get_prompt_templates(self) -> List[PromptTemplate]:
         """Gets all prompt templates"""
         with SessionLocal() as db:
@@ -322,7 +348,9 @@ class CaptionService:
             db.commit()
             return result > 0
 
+
 _caption_service = None
+
 
 def initialize_service():
     global _caption_service

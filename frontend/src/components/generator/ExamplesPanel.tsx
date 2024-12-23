@@ -17,6 +17,18 @@ const ExamplesPanel: React.FC<ExamplesPanelProps> = ({
                                                          onRemoveExample,
                                                      }) => {
     const [showUploadModal, setShowUploadModal] = useState(false);
+    const [isDeleting, setIsDeleting] = useState<number | null>(null);
+
+    const handleRemove = async (id: number) => {
+        try {
+            setIsDeleting(id);
+            onRemoveExample(id);
+        } catch (error) {
+            console.error('Failed to remove example:', error);
+        } finally {
+            setIsDeleting(null);
+        }
+    };
 
     return (
         <Card>
@@ -48,10 +60,11 @@ const ExamplesPanel: React.FC<ExamplesPanelProps> = ({
                                     <p className="text-sm text-gray-600">{example.caption}</p>
                                 </div>
                                 <button
-                                    className="p-1 hover:bg-gray-200 rounded-full"
-                                    onClick={() => onRemoveExample(example.id)}
+                                    className={`p-1 hover:bg-gray-200 rounded-full ${isDeleting === example.id ? 'opacity-50' : ''}`}
+                                    onClick={() => handleRemove(example.id)}
+                                    disabled={isDeleting === example.id}
                                 >
-                                    <Trash2 className="w-4 h-4 text-gray-500" />
+                                    <Trash2 className="w-4 h-4 text-gray-500"/>
                                 </button>
                             </div>
                         </div>

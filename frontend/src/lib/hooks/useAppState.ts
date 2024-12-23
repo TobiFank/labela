@@ -146,11 +146,17 @@ export function useAppState() {
         }));
     }, []);
 
-    const removeExample = useCallback((id: number) => {
-        setState(prev => ({
-            ...prev,
-            examples: prev.examples.filter(ex => ex.id !== id),
-        }));
+    const removeExample = useCallback(async (id: number) => {
+        try {
+            await api.removeExample(id);
+            setState(prev => ({
+                ...prev,
+                examples: prev.examples.filter(ex => ex.id !== id),
+            }));
+        } catch (error) {
+            console.error('Failed to remove example:', error);
+            // Optionally revert the UI state or show error message
+        }
     }, []);
 
     const startProcessing = useCallback(async (folder: string) => {
