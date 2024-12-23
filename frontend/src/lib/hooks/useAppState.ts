@@ -23,6 +23,8 @@ const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
     name: 'Default Template',
     content: 'Generate a caption for the image following these guidelines...',
     isDefault: true,
+    created_at: '',
+    updated_at: null,
 };
 
 export function useAppState() {
@@ -48,7 +50,7 @@ export function useAppState() {
     }, []);
 
     const createTemplate = useCallback(async (template: PromptTemplate) => {
-        const saved = await api.savePromptTemplate(template);
+        const saved = await api.createPromptTemplate(template);
         setState(prev => ({
             ...prev,
             templates: [...prev.templates, saved]
@@ -56,12 +58,13 @@ export function useAppState() {
     }, []);
 
     const updateTemplate = useCallback(async (template: PromptTemplate) => {
-        const updated = await api.savePromptTemplate(template);
+        const updated = await api.updatePromptTemplate(template.id, template);
         setState(prev => ({
             ...prev,
             templates: prev.templates.map(t =>
                 t.id === updated.id ? updated : t
-            )
+            ),
+            activeTemplate: prev.activeTemplate.id === updated.id ? updated : prev.activeTemplate
         }));
     }, []);
 

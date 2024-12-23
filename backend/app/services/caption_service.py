@@ -8,14 +8,16 @@ from typing import List, Optional
 import aiofiles
 from PIL import Image
 from fastapi import UploadFile
+from sqlalchemy.orm import Session
 
 from .providers import OpenAIProvider, HuggingFaceProvider
+from ..database import SessionLocal
 from ..models import (
     ModelConfig,
     ProcessingConfig,
     ProcessedItem,
     ProcessingStatus,
-    ExamplePair, PromptTemplate
+    ExamplePair, PromptTemplate, DBPromptTemplate
 )
 
 
@@ -32,6 +34,7 @@ class CaptionService:
         }
         self._processing_task: Optional[asyncio.Task] = None
         self._templates: List[PromptTemplate] = []
+        self._db: Session = SessionLocal()
 
     async def generate_single_caption(
             self,
@@ -208,32 +211,86 @@ class CaptionService:
         )
 
     def get_prompt_templates(self) -> List[PromptTemplate]:
-        return self._templates
+        try:
+            db_templates = self._db.query(DBPromptTemplate).all()
+            if not db_templates:
+                default_template = DBPromptTemplate(
+                    id="default",
+                    name="Default Template",
+                    content="Generate a caption for the image following these guidelines...",
+                    is_default=True,
+                    created_at=datetime.now()
+                )
+                self._db.add(default_template)
+                self._db.commit()
+                db_templates = [default_template]
 
-    def get_prompt_template(self, template_id: str) -> Optional[PromptTemplate]:
-        return next((t for t in self._templates if t.id == template_id), None)
+            return [PromptTemplate(
+                id=t.id,
+                name=t.name,
+                content=t.content,
+                is_default=t.is_default,
+                created_at=t.created_at,
+                updated_at=t.updated_at
+            ) for t in db_templates]
+        except Exception as e:
+            self._db.rollback()
+            raise e
 
     def create_prompt_template(self, template: PromptTemplate) -> PromptTemplate:
-        template.id = str(uuid.uuid4())
-        template.created_at = datetime.now()
-        self._templates.append(template)
-        return template
+        try:
+            db_template = DBPromptTemplate(
+                id=str(uuid.uuid4()),
+                name=template.name,
+                content=template.content,
+                is_default=template.is_default,
+                created_at=datetime.now()
+            )
+            self._db.add(db_template)
+            self._db.commit()
+            self._db.refresh(db_template)
+            return template
+        except Exception as e:
+            self._db.rollback()
+            raise e
 
     def update_prompt_template(self, template_id: str, updated_template: PromptTemplate) -> Optional[PromptTemplate]:
-        template = self.get_prompt_template(template_id)
-        if template:
-            template.name = updated_template.name
-            template.content = updated_template.content
-            template.updated_at = datetime.now()
-            return template
-        return None
+        try:
+            db_template = self._db.query(DBPromptTemplate).filter(DBPromptTemplate.id == template_id).first()
+            if not db_template:
+                return None
+
+            db_template.name = updated_template.name
+            db_template.content = updated_template.content
+            db_template.updated_at = datetime.now()
+
+            self._db.commit()
+            self._db.refresh(db_template)
+
+            return PromptTemplate(
+                id=db_template.id,
+                name=db_template.name,
+                content=db_template.content,
+                is_default=db_template.is_default,
+                created_at=db_template.created_at,
+                updated_at=db_template.updated_at
+            )
+        except Exception as e:
+            self._db.rollback()
+            raise e
 
     def delete_prompt_template(self, template_id: str) -> bool:
-        template = self.get_prompt_template(template_id)
-        if template:
-            self._templates = [t for t in self._templates if t.id != template_id]
-            return True
-        return False
+        try:
+            result = self._db.query(DBPromptTemplate).filter(DBPromptTemplate.id == template_id).delete()
+            self._db.commit()
+            return result > 0
+        except Exception as e:
+            self._db.rollback()
+            raise e
+
+    def __del__(self):
+        if hasattr(self, '_db'):
+            self._db.close()
 
 
 _caption_service = CaptionService()

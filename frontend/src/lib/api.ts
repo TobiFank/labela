@@ -2,7 +2,7 @@
 import {ExamplePair, ProcessedItem, PromptTemplate} from './types';
 
 class ApiClient {
-    private baseUrl: string = '/api';
+    private baseUrl: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
     async generateCaption(image: File, examples: ExamplePair[]): Promise<string> {
         const formData = new FormData();

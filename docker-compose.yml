@@ -38,5 +38,17 @@ services:
       timeout: 10s
       retries: 3
 
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: captioner
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
 volumes:
   huggingface_cache:
+  postgres_data:

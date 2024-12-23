@@ -21,12 +21,16 @@ const PromptTemplateModal: React.FC<PromptTemplateModalProps> = ({
     const [content, setContent] = useState(template?.content || '');
 
     const handleSave = () => {
-        onSave({
-            id: template?.id || crypto.randomUUID(),
+        const templateToSave: PromptTemplate = {
+            id: template?.id || '',  // Empty string for new templates
             name,
             content,
             isDefault: template?.isDefault || false,
-        });
+            created_at: template?.created_at || new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+
+        onSave(templateToSave);
     };
 
     return (

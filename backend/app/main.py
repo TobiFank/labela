@@ -128,53 +128,26 @@ async def update_caption(item_id: int, caption: str = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/prompt-templates")
+@app.get("/api/prompt-templates", response_model=List[PromptTemplate])
 async def get_prompt_templates():
-    try:
-        return caption_service.get_caption_service().get_prompt_templates()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return caption_service.get_caption_service().get_prompt_templates()
 
-
-@app.get("/api/prompt-templates/{template_id}")
-async def get_prompt_template(template_id: str):
-    try:
-        template = caption_service.get_caption_service().get_prompt_template(template_id)
-        if not template:
-            raise HTTPException(status_code=404, detail="Template not found")
-        return template
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/prompt-templates")
+@app.post("/api/prompt-templates", response_model=PromptTemplate)
 async def create_prompt_template(template: PromptTemplate):
-    try:
-        return caption_service.get_caption_service().create_prompt_template(template)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return caption_service.get_caption_service().create_prompt_template(template)
 
-
-@app.put("/api/prompt-templates/{template_id}")
+@app.put("/api/prompt-templates/{template_id}", response_model=PromptTemplate)
 async def update_prompt_template(template_id: str, template: PromptTemplate):
-    try:
-        updated = caption_service.get_caption_service().update_prompt_template(template_id, template)
-        if not updated:
-            raise HTTPException(status_code=404, detail="Template not found")
-        return updated
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
+    result = caption_service.get_caption_service().update_prompt_template(template_id, template)
+    if not result:
+        raise HTTPException(status_code=404, detail="Template not found")
+    return result
 
 @app.delete("/api/prompt-templates/{template_id}")
 async def delete_prompt_template(template_id: str):
-    try:
-        success = caption_service.get_caption_service().delete_prompt_template(template_id)
-        if not success:
-            raise HTTPException(status_code=404, detail="Template not found")
-        return {"message": "Template deleted successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    if not caption_service.get_caption_service().delete_prompt_template(template_id):
+        raise HTTPException(status_code=404, detail="Template not found")
+    return {"message": "Template deleted successfully"}
 
 
 if __name__ == "__main__":

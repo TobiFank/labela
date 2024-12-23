@@ -17,6 +17,8 @@ torch = "^2.5.1"
 tqdm = "^4.67.1"
 python-dotenv = "^1.0.1"
 aiofiles = "^24.1.0"
+sqlalchemy = "^2.0.36"
+psycopg2 = "^2.9.10"
 
 
 [build-system]

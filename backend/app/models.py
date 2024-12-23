@@ -1,11 +1,14 @@
 # backend/app/models.py
 from datetime import datetime
 from typing import List, Optional, Literal
+from pydantic import BaseModel, ConfigDict
 
-from pydantic import BaseModel
+# Base configuration for all models
+class BaseModelWithConfig(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-
-class ModelConfig(BaseModel):
+# Update all your models to inherit from BaseModelWithConfig instead of BaseModel
+class ModelConfig(BaseModelWithConfig):
     provider: Literal["openai", "huggingface"]
     model: str
     api_key: str
@@ -13,14 +16,12 @@ class ModelConfig(BaseModel):
     max_tokens: int
     temperature: float
 
-
-class ProcessingConfig(BaseModel):
+class ProcessingConfig(BaseModelWithConfig):
     batch_size: int = 50
     error_handling: Literal["continue", "stop"] = "continue"
     concurrent_processing: int = 2
 
-
-class ProcessedItem(BaseModel):
+class ProcessedItem(BaseModelWithConfig):
     id: int
     filename: str
     image_path: str
@@ -29,8 +30,7 @@ class ProcessedItem(BaseModel):
     status: Literal["success", "error", "pending"]
     error_message: Optional[str] = None
 
-
-class ProcessingStatus(BaseModel):
+class ProcessingStatus(BaseModelWithConfig):
     is_processing: bool
     processed_count: int
     total_count: int
@@ -42,26 +42,32 @@ class ProcessingStatus(BaseModel):
     processing_speed: Optional[float]  # items per minute
     total_cost: float
 
-
-class BatchProcessingRequest(BaseModel):  # Renamed from BatchProcessRequest
+class BatchProcessingRequest(BaseModelWithConfig):
     folder_path: str
-    model_settings: ModelConfig  # Renamed from model_config
-    processing_settings: Optional[ProcessingConfig] = None  # Renamed from processing_config
+    model_settings: ModelConfig
+    processing_settings: Optional[ProcessingConfig] = None
 
-
-class CaptionResponse(BaseModel):
+class CaptionResponse(BaseModelWithConfig):
     caption: str
 
-
-class ExamplePair(BaseModel):
+class ExamplePair(BaseModelWithConfig):
     id: int
     image_path: str
     filename: str
     caption: str
     created_at: datetime
 
+class PromptTemplate(BaseModelWithConfig):
+    id: str
+    name: str
+    content: str
+    is_default: bool = False
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
-class PromptTemplate(BaseModel):
+class DBPromptTemplate(BaseModelWithConfig):
+    __tablename__ = "prompt_templates"
+
     id: str
     name: str
     content: str

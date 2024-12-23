@@ -102,10 +102,14 @@ const PromptPanel: React.FC<PromptPanelProps> = ({
                 <PromptTemplateModal
                     template={editingTemplate}
                     onSave={(template) => {
-                        if (template.id) {
-                            onTemplateUpdate(template);
-                        } else {
-                            onTemplateCreate(template);
+                        if (template.id) {  // Now TypeScript knows id exists
+                            if (template.id === '') {
+                                // This is a new template
+                                onTemplateCreate(template);
+                            } else {
+                                // This is an existing template
+                                onTemplateUpdate(template);
+                            }
                         }
                         setIsEditing(false);
                     }}
