@@ -1,5 +1,5 @@
 // frontend/src/lib/hooks/useAppState.ts
-import {useCallback, useState} from 'react';
+import {useCallback, useEffect, useState} from 'react';
 import {AppState, ModelConfig, ProcessingConfig, PromptTemplate} from '../types';
 import {api} from '../api';
 
@@ -30,11 +30,54 @@ export function useAppState() {
         currentView: 'generator',
         modelConfig: DEFAULT_MODEL_CONFIG,
         processingConfig: DEFAULT_PROCESSING_CONFIG,
-        activePromptTemplate: DEFAULT_PROMPT_TEMPLATE,
         examples: [],
         processedItems: [],
         isProcessing: false,
+        templates: [DEFAULT_PROMPT_TEMPLATE],
+        activeTemplate: DEFAULT_PROMPT_TEMPLATE,
     });
+
+    useEffect(() => {
+        api.getPromptTemplates().then(templates => {
+            setState(prev => ({
+                ...prev,
+                templates,
+                activeTemplate: templates[0] || DEFAULT_PROMPT_TEMPLATE
+            }));
+        });
+    }, []);
+
+    const createTemplate = useCallback(async (template: PromptTemplate) => {
+        const saved = await api.savePromptTemplate(template);
+        setState(prev => ({
+            ...prev,
+            templates: [...prev.templates, saved]
+        }));
+    }, []);
+
+    const updateTemplate = useCallback(async (template: PromptTemplate) => {
+        const updated = await api.savePromptTemplate(template);
+        setState(prev => ({
+            ...prev,
+            templates: prev.templates.map(t =>
+                t.id === updated.id ? updated : t
+            )
+        }));
+    }, []);
+
+    const deleteTemplate = useCallback((templateId: string) => {
+        setState(prev => ({
+            ...prev,
+            templates: prev.templates.filter(t => t.id !== templateId)
+        }));
+    }, []);
+
+    const setActiveTemplate = useCallback((template: PromptTemplate) => {
+        setState(prev => ({
+            ...prev,
+            activeTemplate: template
+        }));
+    }, []);
 
     const setView = useCallback((view: 'generator' | 'batch') => {
         setState(prev => ({...prev, currentView: view}));
@@ -107,5 +150,9 @@ export function useAppState() {
         startProcessing,
         stopProcessing,
         generateCaption,
+        createTemplate,
+        updateTemplate,
+        deleteTemplate,
+        setActiveTemplate,
     };
 }

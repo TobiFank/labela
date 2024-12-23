@@ -94,28 +94,35 @@ class ApiClient {
 
     async getPromptTemplates(): Promise<PromptTemplate[]> {
         const response = await fetch(`${this.baseUrl}/prompt-templates`);
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch prompt templates');
-        }
-
+        if (!response.ok) throw new Error('Failed to fetch templates');
         return response.json();
     }
 
-    async savePromptTemplate(template: PromptTemplate): Promise<PromptTemplate> {
+    async createPromptTemplate(template: Omit<PromptTemplate, 'id'>): Promise<PromptTemplate> {
         const response = await fetch(`${this.baseUrl}/prompt-templates`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(template),
         });
-
-        if (!response.ok) {
-            throw new Error('Failed to save prompt template');
-        }
-
+        if (!response.ok) throw new Error('Failed to create template');
         return response.json();
+    }
+
+    async updatePromptTemplate(templateId: string, template: PromptTemplate): Promise<PromptTemplate> {
+        const response = await fetch(`${this.baseUrl}/prompt-templates/${templateId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(template),
+        });
+        if (!response.ok) throw new Error('Failed to update template');
+        return response.json();
+    }
+
+    async deletePromptTemplate(templateId: string): Promise<void> {
+        const response = await fetch(`${this.baseUrl}/prompt-templates/${templateId}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete template');
     }
 }
 

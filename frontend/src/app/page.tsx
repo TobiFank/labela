@@ -19,6 +19,10 @@ const AppPage = () => {
         startProcessing,
         stopProcessing,
         generateCaption,
+        updateTemplate,
+        createTemplate,
+        deleteTemplate,
+        setActiveTemplate,
     } = useAppState();
 
     const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -38,6 +42,12 @@ const AppPage = () => {
                     onRemoveExample={removeExample}
                     onGenerateCaption={generateCaption}
                     modelConfig={state.modelConfig}
+                    templates={state.templates}
+                    activeTemplate={state.activeTemplate}
+                    onTemplateChange={setActiveTemplate}
+                    onTemplateCreate={createTemplate}
+                    onTemplateUpdate={updateTemplate}
+                    onTemplateDelete={deleteTemplate}
                 />
             ) : (
                 <BatchProcessingView

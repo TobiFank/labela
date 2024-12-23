@@ -1,19 +1,23 @@
 # backend/app/services/caption_service.py
 import asyncio
-from datetime import datetime
 import os
+import uuid
+from datetime import datetime, timedelta
 from typing import List, Optional
-from fastapi import UploadFile
-from PIL import Image
+
 import aiofiles
+from PIL import Image
+from fastapi import UploadFile
+
+from .providers import OpenAIProvider, HuggingFaceProvider
 from ..models import (
     ModelConfig,
     ProcessingConfig,
     ProcessedItem,
     ProcessingStatus,
-    ExamplePair
+    ExamplePair, PromptTemplate
 )
-from .providers import OpenAIProvider, HuggingFaceProvider
+
 
 class CaptionService:
     def __init__(self):
@@ -27,6 +31,7 @@ class CaptionService:
             "huggingface": HuggingFaceProvider()
         }
         self._processing_task: Optional[asyncio.Task] = None
+        self._templates: List[PromptTemplate] = []
 
     async def generate_single_caption(
             self,
@@ -202,7 +207,37 @@ class CaptionService:
             created_at=datetime.now()
         )
 
+    def get_prompt_templates(self) -> List[PromptTemplate]:
+        return self._templates
+
+    def get_prompt_template(self, template_id: str) -> Optional[PromptTemplate]:
+        return next((t for t in self._templates if t.id == template_id), None)
+
+    def create_prompt_template(self, template: PromptTemplate) -> PromptTemplate:
+        template.id = str(uuid.uuid4())
+        template.created_at = datetime.now()
+        self._templates.append(template)
+        return template
+
+    def update_prompt_template(self, template_id: str, updated_template: PromptTemplate) -> Optional[PromptTemplate]:
+        template = self.get_prompt_template(template_id)
+        if template:
+            template.name = updated_template.name
+            template.content = updated_template.content
+            template.updated_at = datetime.now()
+            return template
+        return None
+
+    def delete_prompt_template(self, template_id: str) -> bool:
+        template = self.get_prompt_template(template_id)
+        if template:
+            self._templates = [t for t in self._templates if t.id != template_id]
+            return True
+        return False
+
+
 _caption_service = CaptionService()
+
 
 def get_caption_service() -> CaptionService:
     return _caption_service

@@ -32,6 +32,8 @@ export interface PromptTemplate {
     name: string;
     content: string;
     isDefault?: boolean;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface ProcessingConfig {
@@ -44,8 +46,9 @@ export interface AppState {
     currentView: 'generator' | 'batch';
     modelConfig: ModelConfig;
     processingConfig: ProcessingConfig;
-    activePromptTemplate: PromptTemplate;
     examples: ExamplePair[];
     processedItems: ProcessedItem[];
     isProcessing: boolean;
+    templates: PromptTemplate[];
+    activeTemplate: PromptTemplate;
 }

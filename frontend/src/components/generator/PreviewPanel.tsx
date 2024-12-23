@@ -1,7 +1,6 @@
 // frontend/src/components/generator/PreviewPanel.tsx
 import React from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Eye} from 'lucide-react';
 import {ExamplePair} from '@/lib/types';
 
 interface PreviewPanelProps {
@@ -27,9 +26,6 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({examples}) => {
             <CardHeader>
                 <CardTitle className="flex justify-between items-center">
                     <span>LLM Input Preview</span>
-                    <button className="p-2 hover:bg-gray-100 rounded-lg">
-                        <Eye className="w-4 h-4"/>
-                    </button>
                 </CardTitle>
             </CardHeader>
             <CardContent>

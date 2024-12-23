@@ -1,7 +1,7 @@
 // frontend/src/components/generator/TestPanel.tsx
 import React, {useState} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Copy, Edit, Upload} from 'lucide-react';
+import {Copy, Upload} from 'lucide-react';
 import {ModelConfig} from '@/lib/types';
 
 interface TestPanelProps {
@@ -13,7 +13,6 @@ const TestPanel: React.FC<TestPanelProps> = ({onGenerateCaption, modelConfig}) =
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [generatedCaption, setGeneratedCaption] = useState<string>('');
-    const [isEditing, setIsEditing] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,19 +84,6 @@ const TestPanel: React.FC<TestPanelProps> = ({onGenerateCaption, modelConfig}) =
                     <CardTitle>Generated Caption</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="bg-gray-50 p-4 rounded-lg min-h-[150px] mb-4">
-                        {isEditing ? (
-                            <textarea
-                                className="w-full h-full min-h-[120px] p-2 rounded border"
-                                value={generatedCaption}
-                                onChange={(e) => setGeneratedCaption(e.target.value)}
-                            />
-                        ) : (
-                            <p className="text-gray-600">
-                                {generatedCaption || 'Generated caption will appear here...'}
-                            </p>
-                        )}
-                    </div>
                     <div className="flex justify-between items-center">
                         <div className="flex gap-2">
                             <button
@@ -105,12 +91,6 @@ const TestPanel: React.FC<TestPanelProps> = ({onGenerateCaption, modelConfig}) =
                                 onClick={handleCopy}
                             >
                                 <Copy className="w-4 h-4"/>
-                            </button>
-                            <button
-                                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                                onClick={() => setIsEditing(!isEditing)}
-                            >
-                                <Edit className="w-4 h-4"/>
                             </button>
                         </div>
                         <button

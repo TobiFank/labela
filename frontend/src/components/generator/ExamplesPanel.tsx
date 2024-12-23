@@ -1,8 +1,10 @@
 // frontend/src/components/generator/ExamplesPanel.tsx
-import React from 'react';
+import React, {useState} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Plus, Trash2, Upload} from 'lucide-react';
 import {ExamplePair} from '@/lib/types';
+import ExamplePreviewModal from "@/components/generator/ExamplePreviewModal";
+import ExampleUploadModal from "@/components/generator/ExampleUploadModal";
 
 interface ExamplesPanelProps {
     examples: ExamplePair[];
@@ -15,14 +17,35 @@ const ExamplesPanel: React.FC<ExamplesPanelProps> = ({
                                                          onAddExample,
                                                          onRemoveExample,
                                                      }) => {
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [previewImage, setPreviewImage] = useState<{
+        file: File;
+        preview: string;
+    } | null>(null);
+    const [previewCaption, setPreviewCaption] = useState('');
+    const [showUploadModal, setShowUploadModal] = useState(false);
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // In a real app, you might want to show a dialog to input the caption
-            const caption = prompt('Enter caption for this example:');
-            if (caption) {
-                await onAddExample(file, caption);
-            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPreviewImage({
+                    file,
+                    preview: reader.result as string,
+                });
+                setIsPreviewOpen(true);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleConfirmExample = async () => {
+        if (previewImage && previewCaption.trim()) {
+            await onAddExample(previewImage.file, previewCaption);
+            setIsPreviewOpen(false);
+            setPreviewImage(null);
+            setPreviewCaption('');
         }
     };
 
@@ -34,6 +57,16 @@ const ExamplesPanel: React.FC<ExamplesPanelProps> = ({
                     <button className="p-2 hover:bg-blue-50 rounded-lg text-blue-600">
                         <Plus className="w-4 h-4"/>
                     </button>
+                    <button onClick={() => setShowUploadModal(true)}>
+                        <Plus className="w-4 h-4" />
+                    </button>
+
+                    {showUploadModal && (
+                        <ExampleUploadModal
+                            onClose={() => setShowUploadModal(false)}
+                            onUpload={onAddExample}
+                        />
+                    )}
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -81,6 +114,20 @@ const ExamplesPanel: React.FC<ExamplesPanelProps> = ({
                         </div>
                     ))}
                 </div>
+
+                {isPreviewOpen && previewImage && (
+                    <ExamplePreviewModal
+                        image={previewImage.preview}
+                        caption={previewCaption}
+                        onCaptionChange={setPreviewCaption}
+                        onConfirm={handleConfirmExample}
+                        onClose={() => {
+                            setIsPreviewOpen(false);
+                            setPreviewImage(null);
+                            setPreviewCaption('');
+                        }}
+                    />
+                )}
             </CardContent>
         </Card>
     );

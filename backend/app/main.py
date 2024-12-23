@@ -128,20 +128,51 @@ async def update_caption(item_id: int, caption: str = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/prompt-templates")
-async def create_prompt_template(template: PromptTemplate):
+@app.get("/api/prompt-templates")
+async def get_prompt_templates():
     try:
-        saved_template = await caption_service.get_caption_service().save_prompt_template(template)
-        return saved_template
+        return caption_service.get_caption_service().get_prompt_templates()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/prompt-templates")
-async def get_prompt_templates():
+@app.get("/api/prompt-templates/{template_id}")
+async def get_prompt_template(template_id: str):
     try:
-        templates = await caption_service.get_caption_service().get_prompt_templates()
-        return templates
+        template = caption_service.get_caption_service().get_prompt_template(template_id)
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        return template
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/prompt-templates")
+async def create_prompt_template(template: PromptTemplate):
+    try:
+        return caption_service.get_caption_service().create_prompt_template(template)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/prompt-templates/{template_id}")
+async def update_prompt_template(template_id: str, template: PromptTemplate):
+    try:
+        updated = caption_service.get_caption_service().update_prompt_template(template_id, template)
+        if not updated:
+            raise HTTPException(status_code=404, detail="Template not found")
+        return updated
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/prompt-templates/{template_id}")
+async def delete_prompt_template(template_id: str):
+    try:
+        success = caption_service.get_caption_service().delete_prompt_template(template_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Template not found")
+        return {"message": "Template deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
