@@ -128,6 +128,12 @@ class ApiClient {
         });
         if (!response.ok) throw new Error('Failed to delete template');
     }
+
+    async getExamples(): Promise<ExamplePair[]> {
+        const response = await fetch(`${this.baseUrl}/examples`);
+        if (!response.ok) throw new Error('Failed to fetch examples');
+        return response.json();
+    }
 }
 
 export const api = new ApiClient();

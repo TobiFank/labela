@@ -45,6 +45,9 @@ export function useAppState() {
                 activeTemplate: templates[0] || DEFAULT_PROMPT_TEMPLATE
             }));
         });
+        api.getExamples().then(examples => {
+            setState(prev => ({...prev, examples}));
+        });
     }, []);
 
     const createTemplate = useCallback(async (template: PromptTemplate) => {

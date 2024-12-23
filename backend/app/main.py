@@ -97,7 +97,7 @@ async def health_check():
 
 @app.get("/examples")
 async def list_examples():
-    return caption_service.get_caption_service().get_examples()
+    return caption_service.get_caption_service().load_examples()
 
 
 @app.delete("/examples/{example_id}")
