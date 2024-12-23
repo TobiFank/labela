@@ -1,5 +1,5 @@
 // frontend/src/lib/api.ts
-import {ExamplePair, ProcessedItem, PromptTemplate} from './types';
+import {ExamplePair, ModelConfig, ProcessedItem, ProcessingConfig, PromptTemplate} from './types';
 
 class ApiClient {
     private baseUrl: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
