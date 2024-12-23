@@ -35,7 +35,11 @@ class CaptionService:
         self._processing_task: Optional[asyncio.Task] = None
         self._templates: List[PromptTemplate] = []
         self._db: Session = SessionLocal()
+        self._examples = []
+
+    def initialize(self):
         self._examples = self.load_examples()
+        self._templates = self.get_prompt_templates()
 
     async def generate_single_caption(
             self,
@@ -318,9 +322,15 @@ class CaptionService:
             db.commit()
             return result > 0
 
+_caption_service = None
 
-_caption_service = CaptionService()
+def initialize_service():
+    global _caption_service
+    _caption_service = CaptionService()
+    _caption_service.initialize()
 
 
 def get_caption_service() -> CaptionService:
+    if _caption_service is None:
+        raise RuntimeError("CaptionService not initialized")
     return _caption_service

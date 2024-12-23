@@ -14,6 +14,7 @@ from .models import (
 )
 from .services import caption_service
 
+init_db()
 app = FastAPI(title="Image Caption Generator API",
               root_path="/api")
 
@@ -168,11 +169,7 @@ async def delete_prompt_template(template_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-@app.on_event("startup")
-async def startup_event():
-    init_db()
-
+caption_service.initialize_service()
 
 if __name__ == "__main__":
     import uvicorn
