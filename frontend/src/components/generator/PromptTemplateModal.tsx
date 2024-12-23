@@ -22,15 +22,13 @@ const PromptTemplateModal: React.FC<PromptTemplateModalProps> = ({
 
     const handleSave = () => {
         const templateToSave: PromptTemplate = {
-            id: template?.id || '',  // Empty string for new templates
+            id: template?.id || '',
             name,
             content,
-            isDefault: template?.isDefault || false,
-            created_at: template?.created_at || new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            isDefault: template?.isDefault || false
         };
-
         onSave(templateToSave);
+        onClose();
     };
 
     return (

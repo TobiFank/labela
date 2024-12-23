@@ -1,4 +1,5 @@
 // frontend/src/lib/types.ts
+
 export type Provider = 'openai' | 'huggingface';
 export type Model = 'gpt-4-vision-preview' | 'gpt-4' | 'gpt-3.5-turbo' | string;
 
@@ -31,9 +32,7 @@ export interface PromptTemplate {
     id: string;
     name: string;
     content: string;
-    isDefault?: boolean;
-    created_at: string;
-    updated_at: string | null;
+    isDefault: boolean;
 }
 
 export interface ProcessingConfig {

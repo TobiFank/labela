@@ -23,8 +23,6 @@ const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
     name: 'Default Template',
     content: 'Generate a caption for the image following these guidelines...',
     isDefault: true,
-    created_at: '',
-    updated_at: null,
 };
 
 export function useAppState() {
@@ -50,22 +48,34 @@ export function useAppState() {
     }, []);
 
     const createTemplate = useCallback(async (template: PromptTemplate) => {
-        const saved = await api.createPromptTemplate(template);
-        setState(prev => ({
-            ...prev,
-            templates: [...prev.templates, saved]
-        }));
+        try {
+            // Just send the template as is - it will have an empty string id for new templates
+            const saved = await api.createPromptTemplate(template);
+            setState(prev => ({
+                ...prev,
+                templates: [...prev.templates, saved],
+                activeTemplate: saved  // Also set it as the active template
+            }));
+        } catch (error) {
+            console.error('Failed to create template:', error);
+            // You might want to handle this error in the UI
+        }
     }, []);
 
     const updateTemplate = useCallback(async (template: PromptTemplate) => {
-        const updated = await api.updatePromptTemplate(template.id, template);
-        setState(prev => ({
-            ...prev,
-            templates: prev.templates.map(t =>
-                t.id === updated.id ? updated : t
-            ),
-            activeTemplate: prev.activeTemplate.id === updated.id ? updated : prev.activeTemplate
-        }));
+        try {
+            const updated = await api.updatePromptTemplate(template.id, template);
+            setState(prev => ({
+                ...prev,
+                templates: prev.templates.map(t =>
+                    t.id === updated.id ? updated : t
+                ),
+                activeTemplate: prev.activeTemplate.id === updated.id ? updated : prev.activeTemplate
+            }));
+        } catch (error) {
+            console.error('Failed to update template:', error);
+            // Handle error appropriately
+        }
     }, []);
 
     const deleteTemplate = useCallback((templateId: string) => {

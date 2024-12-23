@@ -207,90 +207,80 @@ class CaptionService:
             image_path=example_path,
             filename=image.filename,
             caption=caption,
-            created_at=datetime.now()
         )
 
     def get_prompt_templates(self) -> List[PromptTemplate]:
-        try:
-            db_templates = self._db.query(DBPromptTemplate).all()
-            if not db_templates:
-                default_template = DBPromptTemplate(
-                    id="default",
-                    name="Default Template",
-                    content="Generate a caption for the image following these guidelines...",
-                    is_default=True,
-                    created_at=datetime.now()
-                )
-                self._db.add(default_template)
-                self._db.commit()
-                db_templates = [default_template]
-
-            return [PromptTemplate(
-                id=t.id,
-                name=t.name,
-                content=t.content,
-                is_default=t.is_default,
-                created_at=t.created_at,
-                updated_at=t.updated_at
-            ) for t in db_templates]
-        except Exception as e:
-            self._db.rollback()
-            raise e
+        """Gets all prompt templates"""
+        with SessionLocal() as db:
+            db_templates = db.query(DBPromptTemplate).all()
+            return [
+                PromptTemplate(
+                    id=t.id,
+                    name=t.name,
+                    content=t.content,
+                    isDefault=t.is_default
+                ) for t in db_templates
+            ]
 
     def create_prompt_template(self, template: PromptTemplate) -> PromptTemplate:
-        try:
-            db_template = DBPromptTemplate(
-                id=str(uuid.uuid4()),
-                name=template.name,
-                content=template.content,
-                is_default=template.is_default,
-                created_at=datetime.now()
-            )
-            self._db.add(db_template)
-            self._db.commit()
-            self._db.refresh(db_template)
-            return template
-        except Exception as e:
-            self._db.rollback()
-            raise e
+        """Creates a new prompt template"""
+        with SessionLocal() as db:
+            try:
+                # Always generate a new UUID for new templates
+                template_id = str(uuid.uuid4())
+                db_template = DBPromptTemplate(
+                    id=template_id,
+                    name=template.name,
+                    content=template.content,
+                    is_default=False  # New templates are never default
+                )
+                db.add(db_template)
+                db.commit()
+                db.refresh(db_template)
+
+                return PromptTemplate(
+                    id=db_template.id,
+                    name=db_template.name,
+                    content=db_template.content,
+                    isDefault=db_template.is_default
+                )
+            except Exception as e:
+                db.rollback()
+                raise Exception(f"Database error: {str(e)}")
 
     def update_prompt_template(self, template_id: str, updated_template: PromptTemplate) -> Optional[PromptTemplate]:
-        try:
-            db_template = self._db.query(DBPromptTemplate).filter(DBPromptTemplate.id == template_id).first()
-            if not db_template:
-                return None
+        """Updates an existing prompt template"""
+        with SessionLocal() as db:
+            try:
+                db_template = db.query(DBPromptTemplate).filter(DBPromptTemplate.id == template_id).first()
+                if not db_template:
+                    return None
 
-            db_template.name = updated_template.name
-            db_template.content = updated_template.content
-            db_template.updated_at = datetime.now()
+                # Update fields
+                db_template.name = updated_template.name
+                db_template.content = updated_template.content
+                db_template.is_default = updated_template.isDefault
 
-            self._db.commit()
-            self._db.refresh(db_template)
+                db.commit()
+                db.refresh(db_template)
 
-            return PromptTemplate(
-                id=db_template.id,
-                name=db_template.name,
-                content=db_template.content,
-                is_default=db_template.is_default,
-                created_at=db_template.created_at,
-                updated_at=db_template.updated_at
-            )
-        except Exception as e:
-            self._db.rollback()
-            raise e
+                return PromptTemplate(
+                    id=db_template.id,
+                    name=db_template.name,
+                    content=db_template.content,
+                    isDefault=db_template.is_default
+                )
+            except Exception as e:
+                db.rollback()
+                print(f"Error updating template: {e}")
+                raise
 
     def delete_prompt_template(self, template_id: str) -> bool:
-        try:
-            result = self._db.query(DBPromptTemplate).filter(DBPromptTemplate.id == template_id).delete()
-            self._db.commit()
+        """Deletes a prompt template"""
+        with SessionLocal() as db:
+            result = db.query(DBPromptTemplate).filter(DBPromptTemplate.id == template_id).delete()
+            db.commit()
             return result > 0
-        except Exception as e:
-            self._db.rollback()
-            raise e
-
-    def __del__(self):
-        if hasattr(self, '_db'):
-            self._db.close()
 
 
 _caption_service = CaptionService()

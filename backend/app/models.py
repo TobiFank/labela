@@ -2,6 +2,10 @@
 from datetime import datetime
 from typing import List, Optional, Literal
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy import Column, String, Boolean, DateTime
+
+from .database import Base
+
 
 # Base configuration for all models
 class BaseModelWithConfig(BaseModel):
@@ -55,22 +59,17 @@ class ExamplePair(BaseModelWithConfig):
     image_path: str
     filename: str
     caption: str
-    created_at: datetime
 
-class PromptTemplate(BaseModelWithConfig):
+class PromptTemplate(BaseModel):
     id: str
     name: str
     content: str
-    is_default: bool = False
-    created_at: datetime
-    updated_at: Optional[datetime] = None
+    isDefault: bool = False
 
-class DBPromptTemplate(BaseModelWithConfig):
+class DBPromptTemplate(Base):
     __tablename__ = "prompt_templates"
 
-    id: str
-    name: str
-    content: str
-    is_default: bool = False
-    created_at: datetime
-    updated_at: Optional[datetime] = None
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    content = Column(String, nullable=False)
+    is_default = Column(Boolean, default=False)
