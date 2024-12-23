@@ -1,8 +1,9 @@
 # backend/app/models.py
 from datetime import datetime
 from typing import List, Optional, Literal
+
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Column, String, Boolean, DateTime
+from sqlalchemy import Column, String, Boolean, DateTime, Integer
 
 from .database import Base
 
@@ -10,6 +11,7 @@ from .database import Base
 # Base configuration for all models
 class BaseModelWithConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
 
 # Update all your models to inherit from BaseModelWithConfig instead of BaseModel
 class ModelConfig(BaseModelWithConfig):
@@ -20,10 +22,12 @@ class ModelConfig(BaseModelWithConfig):
     max_tokens: int
     temperature: float
 
+
 class ProcessingConfig(BaseModelWithConfig):
     batch_size: int = 50
     error_handling: Literal["continue", "stop"] = "continue"
     concurrent_processing: int = 2
+
 
 class ProcessedItem(BaseModelWithConfig):
     id: int
@@ -33,6 +37,7 @@ class ProcessedItem(BaseModelWithConfig):
     timestamp: datetime
     status: Literal["success", "error", "pending"]
     error_message: Optional[str] = None
+
 
 class ProcessingStatus(BaseModelWithConfig):
     is_processing: bool
@@ -46,13 +51,16 @@ class ProcessingStatus(BaseModelWithConfig):
     processing_speed: Optional[float]  # items per minute
     total_cost: float
 
+
 class BatchProcessingRequest(BaseModelWithConfig):
     folder_path: str
     model_settings: ModelConfig
     processing_settings: Optional[ProcessingConfig] = None
 
+
 class CaptionResponse(BaseModelWithConfig):
     caption: str
+
 
 class ExamplePair(BaseModelWithConfig):
     id: int
@@ -60,11 +68,13 @@ class ExamplePair(BaseModelWithConfig):
     filename: str
     caption: str
 
+
 class PromptTemplate(BaseModel):
     id: str
     name: str
     content: str
     isDefault: bool = False
+
 
 class DBPromptTemplate(Base):
     __tablename__ = "prompt_templates"
@@ -73,3 +83,13 @@ class DBPromptTemplate(Base):
     name = Column(String, nullable=False)
     content = Column(String, nullable=False)
     is_default = Column(Boolean, default=False)
+
+
+class DBExample(Base):
+    __tablename__ = "examples"
+
+    id = Column(Integer, primary_key=True)
+    filename = Column(String, nullable=False)
+    image_path = Column(String, nullable=False)
+    caption = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)

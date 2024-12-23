@@ -17,7 +17,7 @@ from ..models import (
     ProcessingConfig,
     ProcessedItem,
     ProcessingStatus,
-    ExamplePair, PromptTemplate, DBPromptTemplate
+    ExamplePair, PromptTemplate, DBPromptTemplate, DBExample
 )
 
 
@@ -35,7 +35,7 @@ class CaptionService:
         self._processing_task: Optional[asyncio.Task] = None
         self._templates: List[PromptTemplate] = []
         self._db: Session = SessionLocal()
-        self._examples: List[ExamplePair] = []
+        self._examples = self.load_examples()
 
     async def generate_single_caption(
             self,
@@ -198,30 +198,52 @@ class CaptionService:
 
     async def save_example(self, image: UploadFile, caption: str) -> ExamplePair:
         try:
+            # Save file to disk
             os.makedirs("data/examples", exist_ok=True)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{timestamp}_{image.filename}"
             filepath = os.path.join("data/examples", filename)
 
-            # Save file
             async with aiofiles.open(filepath, 'wb') as out_file:
                 content = await image.read()
                 await out_file.write(content)
 
-            example = ExamplePair(
-                id=len(self._examples) + 1,
-                image=f"http://localhost:8000/api/examples/{filename}",  # Full URL
-                filename=filename,
-                caption=caption
-            )
-            self._examples.append(example)
-            return example
+            # Save to database
+            with SessionLocal() as db:
+                db_example = DBExample(
+                    filename=filename,
+                    image_path=filepath,
+                    caption=caption
+                )
+                db.add(db_example)
+                db.commit()
+                db.refresh(db_example)
+
+                return ExamplePair(
+                    id=db_example.id,
+                    image=f"http://localhost:8000/api/examples/{filename}",
+                    filename=filename,
+                    caption=caption
+                )
 
         except Exception as e:
-            print(f"Error saving example: {str(e)}")
             if os.path.exists(filepath):
                 os.remove(filepath)
             raise RuntimeError(f"Failed to save example: {str(e)}")
+
+    # Add method to load examples on startup
+    def load_examples(self) -> List[ExamplePair]:
+        with SessionLocal() as db:
+            db_examples = db.query(DBExample).all()
+            return [
+                ExamplePair(
+                    id=ex.id,
+                    image=f"http://localhost:8000/api/examples/{ex.filename}",
+                    filename=ex.filename,
+                    caption=ex.caption
+                )
+                for ex in db_examples
+            ]
 
     def get_prompt_templates(self) -> List[PromptTemplate]:
         """Gets all prompt templates"""
