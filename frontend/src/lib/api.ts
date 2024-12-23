@@ -49,20 +49,6 @@ class ApiClient {
         return response.json();
     }
 
-    async savePromptTemplate(template: PromptTemplate): Promise<void> {
-        const response = await fetch(`${this.baseUrl}/prompt-templates`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(template),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to save prompt template');
-        }
-    }
-
     async uploadExamplePair(image: File, caption: string): Promise<ExamplePair> {
         const formData = new FormData();
         formData.append('image', image);
@@ -75,6 +61,58 @@ class ApiClient {
 
         if (!response.ok) {
             throw new Error('Failed to upload example pair');
+        }
+
+        return response.json();
+    }
+
+    async updateProcessedItemCaption(id: number, caption: string): Promise<ProcessedItem> {
+        const response = await fetch(`${this.baseUrl}/processed-items/${id}/caption`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({caption}),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update caption');
+        }
+
+        return response.json();
+    }
+
+    async removeExample(id: number): Promise<void> {
+        const response = await fetch(`${this.baseUrl}/examples/${id}`, {
+            method: 'DELETE',
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to remove example');
+        }
+    }
+
+    async getPromptTemplates(): Promise<PromptTemplate[]> {
+        const response = await fetch(`${this.baseUrl}/prompt-templates`);
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch prompt templates');
+        }
+
+        return response.json();
+    }
+
+    async savePromptTemplate(template: PromptTemplate): Promise<PromptTemplate> {
+        const response = await fetch(`${this.baseUrl}/prompt-templates`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(template),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to save prompt template');
         }
 
         return response.json();

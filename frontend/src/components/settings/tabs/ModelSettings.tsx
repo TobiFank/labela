@@ -5,6 +5,7 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Card, CardContent} from "@/components/ui/card";
+import {Slider} from "@/components/ui/slider";
 
 interface ModelSettingsProps {
     config: ModelConfig;
@@ -15,7 +16,7 @@ const ModelSettings: React.FC<ModelSettingsProps> = ({
                                                          config,
                                                          onUpdate,
                                                      }) => {
-    const handleChange = (key: keyof ModelConfig, value: any) => {
+    const handleChange = (key: keyof ModelConfig, value: string | number) => {
         onUpdate({[key]: value});
     };
 
@@ -91,6 +92,27 @@ const ModelSettings: React.FC<ModelSettingsProps> = ({
                         min="1"
                     />
                 </div>
+            </div>
+
+            {/* Add Temperature Control */}
+            <div className="space-y-2">
+                <Label>Temperature</Label>
+                <div className="flex items-center gap-4">
+                    <Slider
+                        value={[config.temperature]}
+                        onValueChange={(value) => handleChange('temperature', value[0])}
+                        min={0}
+                        max={1}
+                        step={0.1}
+                        className="flex-1"
+                    />
+                    <span className="text-sm font-medium w-12 text-right">
+                        {config.temperature.toFixed(1)}
+                    </span>
+                </div>
+                <p className="text-xs text-gray-500">
+                    Lower values make the output more focused and deterministic
+                </p>
             </div>
 
             {/* Cost Preview */}

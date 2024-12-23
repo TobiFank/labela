@@ -27,10 +27,10 @@ const FolderSelect: React.FC<FolderSelectProps> = ({
                     {folders.map((folder) => (
                         <div
                             key={folder}
-                            className="p-2 hover:bg-gray-100 rounded cursor-pointer flex items-center gap-2"
-                            onClick={() => {
-                                onSelect(folder);
-                            }}
+                            className={`p-2 hover:bg-gray-100 rounded cursor-pointer flex items-center gap-2 ${
+                                folder === currentFolder ? 'bg-blue-50' : ''
+                            }`}
+                            onClick={() => onSelect(folder)}
                         >
                             <Folder className="w-4 h-4 text-gray-600"/>
                             <span>{folder}</span>

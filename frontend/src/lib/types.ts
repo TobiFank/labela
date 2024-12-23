@@ -8,6 +8,7 @@ export interface ModelConfig {
     apiKey: string;
     costPerToken: number;
     maxTokens: number;
+    temperature: number;
 }
 
 export interface ProcessedItem {

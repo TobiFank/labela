@@ -1,16 +1,16 @@
 # backend/app/main.py
-from fastapi import FastAPI, HTTPException, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
-import os
-from .services import caption_service
+
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Body
+from fastapi.middleware.cors import CORSMiddleware
+
 from .models import (
     ProcessingStatus,
-    BatchProcessRequest,
+    BatchProcessingRequest,
     CaptionResponse,
-    ModelConfig,
-    ProcessingConfig
+    ModelConfig, PromptTemplate
 )
+from .services import caption_service
 
 app = FastAPI(title="Image Caption Generator API")
 
@@ -23,64 +23,130 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.post("/api/generate-caption", response_model=CaptionResponse)
 async def generate_caption(
         image: UploadFile = File(...),
         examples: Optional[List[UploadFile]] = File(None),
-        model_config: ModelConfig = None,
+        model_settings: Optional[ModelConfig] = Body(None)
 ):
     try:
-        caption = await caption_service.generate_single_caption(
+        caption = await caption_service.get_caption_service().generate_single_caption(
             image_file=image,
             example_files=examples,
-            model_config=model_config
+            model_config=model_settings
         )
         return CaptionResponse(caption=caption)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/api/batch-process")
-async def start_batch_processing(request: BatchProcessRequest):
+async def start_batch_processing(request: BatchProcessingRequest):
     try:
-        # Start the batch processing in a background task
-        caption_service.start_batch_processing(
+        caption_service.get_caption_service().start_batch_processing(
             folder_path=request.folder_path,
-            model_config=request.model_config,
-            processing_config=request.processing_config
+            model_config=request.model_settings,
+            processing_config=request.processing_settings
         )
         return {"message": "Batch processing started"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/api/batch-process/stop")
 async def stop_batch_processing():
     try:
-        caption_service.stop_batch_processing()
+        caption_service.get_caption_service().stop_batch_processing()
         return {"message": "Batch processing stopped"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/batch-process/status", response_model=ProcessingStatus)
 async def get_processing_status():
     try:
-        status = caption_service.get_processing_status()
+        status = caption_service.get_caption_service().get_processing_status()
         return status
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/api/examples")
 async def upload_example(
         image: UploadFile = File(...),
-        caption: str = None
+        caption: str = Form(...)
 ):
     try:
-        example = await caption_service.save_example(image, caption)
+        example = await caption_service.get_caption_service().save_example(image, caption)
         return example
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Additional routes would go here
+
+# Add a health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
+
+@app.get("/api/examples")
+async def list_examples():
+    return caption_service.get_caption_service().get_examples()
+
+
+@app.delete("/api/examples/{example_id}")
+async def delete_example(example_id: int):
+    return caption_service.get_caption_service().delete_example(example_id)
+
+
+@app.put("/api/captions/{item_id}")
+async def update_caption(item_id: int, caption: str = Body(...)):
+    return caption_service.get_caption_service().update_caption(item_id, caption)
+
+
+@app.post("/api/prompt-templates")
+async def save_prompt_template(template: PromptTemplate):
+    return caption_service.get_caption_service().save_prompt_template(template)
+
+
+@app.delete("/api/examples/{example_id}")
+async def remove_example(example_id: int):
+    try:
+        await caption_service.get_caption_service().remove_example(example_id)
+        return {"message": "Example removed successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/processed-items/{item_id}/caption")
+async def update_caption(item_id: int, caption: str = Body(...)):
+    try:
+        updated_item = await caption_service.get_caption_service().update_caption(item_id, caption)
+        return updated_item
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/prompt-templates")
+async def create_prompt_template(template: PromptTemplate):
+    try:
+        saved_template = await caption_service.get_caption_service().save_prompt_template(template)
+        return saved_template
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/prompt-templates")
+async def get_prompt_templates():
+    try:
+        templates = await caption_service.get_caption_service().get_prompt_templates()
+        return templates
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

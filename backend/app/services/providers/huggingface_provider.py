@@ -2,6 +2,7 @@
 from typing import Optional
 from PIL import Image
 import torch
+from sympy.physics.units import temperature
 from transformers import pipeline
 from ...models import ModelConfig
 from .base_provider import BaseProvider
@@ -17,7 +18,8 @@ class HuggingFaceProvider(BaseProvider):
         self.pipeline = pipeline(
             "image-to-text",
             model=config.model,
-            device=0 if torch.cuda.is_available() else -1
+            device=0 if torch.cuda.is_available() else -1,
+            temperature=config.temperature
         )
 
     async def generate_caption(self, image: Image.Image) -> str:

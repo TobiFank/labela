@@ -9,6 +9,7 @@ const DEFAULT_MODEL_CONFIG: ModelConfig = {
     apiKey: '',
     costPerToken: 0.01,
     maxTokens: 1000,
+    temperature: 0.5,
 };
 
 const DEFAULT_PROCESSING_CONFIG: ProcessingConfig = {

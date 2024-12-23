@@ -1,6 +1,6 @@
 // frontend/src/components/batch_processing/BatchProcessingView.tsx
 import React, {useState} from 'react';
-import {ProcessedItem} from '@/lib/types';
+import {ModelConfig, ProcessedItem} from '@/lib/types';
 import StatusSection from './StatusSection';
 import LiveFeed from './LiveFeed';
 import ProcessedGallery from './ProcessedGallery';
@@ -12,6 +12,7 @@ interface BatchProcessingViewProps {
     processedItems: ProcessedItem[];
     onStartProcessing: (folder: string) => Promise<void>;
     onStopProcessing: () => Promise<void>;
+    modelConfig: ModelConfig;
 }
 
 const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
@@ -19,15 +20,18 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                                                                      processedItems,
                                                                      onStartProcessing,
                                                                      onStopProcessing,
+                                                                     modelConfig
                                                                  }) => {
     const [selectedImage, setSelectedImage] = useState<ProcessedItem | null>(null);
     const [showFolderSelect, setShowFolderSelect] = useState(false);
     const [showQuickReview, setShowQuickReview] = useState(false);
     const [sourceFolder, setSourceFolder] = useState('/projects/architecture/raw');
+    const [startTime, setStartTime] = useState<Date | undefined>(undefined);
 
     const handleFolderSelect = async (folder: string) => {
         setSourceFolder(folder);
         setShowFolderSelect(false);
+        setStartTime(new Date());
         await onStartProcessing(folder);
     };
 
@@ -41,7 +45,9 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                     onFolderSelectClick={() => setShowFolderSelect(true)}
                     onProcessingToggle={isProcessing ? onStopProcessing : () => onStartProcessing(sourceFolder)}
                     processedCount={processedItems.length}
-                    totalCount={1234} // This would come from your backend
+                    totalCount={1234}
+                    startTime={startTime}
+                    costPerToken={modelConfig.costPerToken}
                 />
             </div>
 

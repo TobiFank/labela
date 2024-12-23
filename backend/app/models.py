@@ -1,7 +1,9 @@
 # backend/app/models.py
-from pydantic import BaseModel
-from typing import List, Optional, Literal
 from datetime import datetime
+from typing import List, Optional, Literal
+
+from pydantic import BaseModel
+
 
 class ModelConfig(BaseModel):
     provider: Literal["openai", "huggingface"]
@@ -9,11 +11,14 @@ class ModelConfig(BaseModel):
     api_key: str
     cost_per_token: float
     max_tokens: int
+    temperature: float
+
 
 class ProcessingConfig(BaseModel):
     batch_size: int = 50
     error_handling: Literal["continue", "stop"] = "continue"
     concurrent_processing: int = 2
+
 
 class ProcessedItem(BaseModel):
     id: int
@@ -23,6 +28,7 @@ class ProcessedItem(BaseModel):
     timestamp: datetime
     status: Literal["success", "error", "pending"]
     error_message: Optional[str] = None
+
 
 class ProcessingStatus(BaseModel):
     is_processing: bool
@@ -36,13 +42,16 @@ class ProcessingStatus(BaseModel):
     processing_speed: Optional[float]  # items per minute
     total_cost: float
 
-class BatchProcessRequest(BaseModel):
+
+class BatchProcessingRequest(BaseModel):  # Renamed from BatchProcessRequest
     folder_path: str
-    model_config: ModelConfig
-    processing_config: Optional[ProcessingConfig] = None
+    model_settings: ModelConfig  # Renamed from model_config
+    processing_settings: Optional[ProcessingConfig] = None  # Renamed from processing_config
+
 
 class CaptionResponse(BaseModel):
     caption: str
+
 
 class ExamplePair(BaseModel):
     id: int
@@ -51,6 +60,7 @@ class ExamplePair(BaseModel):
     caption: str
     created_at: datetime
 
+
 class PromptTemplate(BaseModel):
     id: str
     name: str
@@ -58,5 +68,3 @@ class PromptTemplate(BaseModel):
     is_default: bool = False
     created_at: datetime
     updated_at: Optional[datetime] = None
-
-# Additional model classes would go here

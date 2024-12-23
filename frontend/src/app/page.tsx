@@ -45,6 +45,7 @@ const AppPage = () => {
                     processedItems={state.processedItems}
                     onStartProcessing={startProcessing}
                     onStopProcessing={stopProcessing}
+                    modelConfig={state.modelConfig}
                 />
             )}
 

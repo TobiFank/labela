@@ -45,7 +45,8 @@ class OpenAIProvider(BaseProvider):
                         ]
                     }
                 ],
-                max_tokens=self.config.max_tokens
+                max_tokens=self.config.max_tokens,
+                temperature=self.config.temperature
             )
 
             return response.choices[0].message.content.strip()

@@ -13,22 +13,6 @@ const PromptSettings: React.FC = () => {
                     defaultValue="Generate a caption for the image following these guidelines..."
                 />
             </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Temperature
-                </label>
-                <div className="flex items-center gap-4">
-                    <input
-                        type="range"
-                        className="w-full"
-                        min="0"
-                        max="1"
-                        step="0.1"
-                        defaultValue="0.7"
-                    />
-                    <span className="text-sm text-gray-600">0.7</span>
-                </div>
-            </div>
         </div>
     );
 };

@@ -1,7 +1,7 @@
 // frontend/src/components/batch_processing/StatusSection.tsx
 import React from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {FolderOpen, Pause, Play} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FolderOpen, Pause, Play } from 'lucide-react';
 
 interface StatusSectionProps {
     sourceFolder: string;
@@ -10,7 +10,57 @@ interface StatusSectionProps {
     onProcessingToggle: () => void;
     processedCount: number;
     totalCount: number;
+    startTime?: Date;
+    costPerToken: number;
 }
+
+// Utility functions
+const formatDuration = (minutes: number): string => {
+    if (minutes < 60) {
+        return `${Math.round(minutes)}m`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = Math.round(minutes % 60);
+    return `${hours}h ${remainingMinutes}m`;
+};
+
+const calculateTimeLeft = (processedCount: number, totalCount: number, startTime?: Date): string => {
+    if (!startTime || processedCount === 0) return '--';
+
+    const elapsedMinutes = (Date.now() - startTime.getTime()) / (1000 * 60);
+    const imagesPerMinute = processedCount / elapsedMinutes;
+    const remainingImages = totalCount - processedCount;
+    const remainingMinutes = remainingImages / imagesPerMinute;
+
+    return formatDuration(remainingMinutes);
+};
+
+const calculateSpeed = (processedCount: number, startTime?: Date): string => {
+    if (!startTime || processedCount === 0) return '--';
+
+    const elapsedMinutes = (Date.now() - startTime.getTime()) / (1000 * 60);
+    const imagesPerMinute = processedCount / elapsedMinutes;
+
+    return `${imagesPerMinute.toFixed(1)}/min`;
+};
+
+const calculateCost = (processedCount: number, costPerToken: number): string => {
+    const estimatedTokensPerImage = 150; // Average estimation
+    const totalCost = (processedCount * estimatedTokensPerImage * costPerToken) / 1000;
+    return `$${totalCost.toFixed(2)}`;
+};
+
+const calculateCompletion = (startTime?: Date, processedCount?: number, totalCount?: number): string => {
+    if (!startTime || !processedCount || !totalCount || processedCount === 0) return '--';
+
+    const elapsedMinutes = (Date.now() - startTime.getTime()) / (1000 * 60);
+    const imagesPerMinute = processedCount / elapsedMinutes;
+    const remainingImages = totalCount - processedCount;
+    const remainingMinutes = remainingImages / imagesPerMinute;
+
+    const estimatedCompletion = new Date(Date.now() + remainingMinutes * 60 * 1000);
+    return estimatedCompletion.toLocaleTimeString();
+};
 
 const StatusSection: React.FC<StatusSectionProps> = ({
                                                          sourceFolder,
@@ -19,12 +69,14 @@ const StatusSection: React.FC<StatusSectionProps> = ({
                                                          onProcessingToggle,
                                                          processedCount,
                                                          totalCount,
+                                                         startTime,
+                                                         costPerToken
                                                      }) => {
-    const progress = (processedCount / totalCount) * 100;
-    const estimatedTimeLeft = '3.5 hours'; // This would be calculated based on processing speed
-    const processingSpeed = '5.2/min';
-    const estimatedCost = '$0.47';
-    const estimatedCompletion = '6:30 PM';
+    const progress = totalCount > 0 ? (processedCount / totalCount) * 100 : 0;
+    const estimatedTimeLeft = calculateTimeLeft(processedCount, totalCount, startTime);
+    const processingSpeed = calculateSpeed(processedCount, startTime);
+    const estimatedCost = calculateCost(processedCount, costPerToken);
+    const estimatedCompletion = calculateCompletion(startTime, processedCount, totalCount);
 
     return (
         <div className="grid grid-cols-3 gap-6">
