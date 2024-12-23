@@ -39,10 +39,25 @@ const ExampleUploadModal: React.FC<ExampleUploadModalProps> = ({onClose, onUploa
     };
 
     const handleUpload = async () => {
-        if (selectedImage && (caption || captionFile)) {
-            const finalCaption = captionFile ? await captionFile.text() : caption;
+        if (!selectedImage) return;
+
+        try {
+            const formData = new FormData();
+            formData.append('image', selectedImage);
+
+            // If caption file exists, read it
+            let finalCaption = caption;
+            if (captionFile) {
+                finalCaption = await captionFile.text();
+            }
+
+            formData.append('caption', finalCaption);
+
             await onUpload(selectedImage, finalCaption);
             onClose();
+        } catch (error) {
+            console.error('Upload failed:', error);
+            // Add error handling UI feedback here
         }
     };
 

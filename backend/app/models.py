@@ -28,7 +28,7 @@ class ProcessingConfig(BaseModelWithConfig):
 class ProcessedItem(BaseModelWithConfig):
     id: int
     filename: str
-    image_path: str
+    image: str
     caption: str
     timestamp: datetime
     status: Literal["success", "error", "pending"]
@@ -56,7 +56,7 @@ class CaptionResponse(BaseModelWithConfig):
 
 class ExamplePair(BaseModelWithConfig):
     id: int
-    image_path: str
+    image: str
     filename: str
     caption: str
 

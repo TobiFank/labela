@@ -35,6 +35,7 @@ class CaptionService:
         self._processing_task: Optional[asyncio.Task] = None
         self._templates: List[PromptTemplate] = []
         self._db: Session = SessionLocal()
+        self._examples: List[ExamplePair] = []
 
     async def generate_single_caption(
             self,
@@ -140,7 +141,7 @@ class CaptionService:
             return ProcessedItem(
                 id=len(self._processed_items) + 1,
                 filename=os.path.basename(image_path),
-                image_path=image_path,
+                image=image_path,
                 caption=caption,
                 timestamp=datetime.now(),
                 status="success"
@@ -149,7 +150,7 @@ class CaptionService:
             return ProcessedItem(
                 id=len(self._processed_items) + 1,
                 filename=os.path.basename(image_path),
-                image_path=image_path,
+                image=image_path,
                 caption="",
                 timestamp=datetime.now(),
                 status="error",
@@ -196,18 +197,31 @@ class CaptionService:
         )
 
     async def save_example(self, image: UploadFile, caption: str) -> ExamplePair:
-        # Save example image to examples directory
-        example_path = f"examples/{image.filename}"
-        async with aiofiles.open(example_path, 'wb') as out_file:
-            content = await image.read()
-            await out_file.write(content)
+        try:
+            os.makedirs("data/examples", exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"{timestamp}_{image.filename}"
+            filepath = os.path.join("data/examples", filename)
 
-        return ExamplePair(
-            id=len(self._examples) + 1,
-            image_path=example_path,
-            filename=image.filename,
-            caption=caption,
-        )
+            # Save file
+            async with aiofiles.open(filepath, 'wb') as out_file:
+                content = await image.read()
+                await out_file.write(content)
+
+            example = ExamplePair(
+                id=len(self._examples) + 1,
+                image=f"http://localhost:8000/api/examples/{filename}",  # Full URL
+                filename=filename,
+                caption=caption
+            )
+            self._examples.append(example)
+            return example
+
+        except Exception as e:
+            print(f"Error saving example: {str(e)}")
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            raise RuntimeError(f"Failed to save example: {str(e)}")
 
     def get_prompt_templates(self) -> List[PromptTemplate]:
         """Gets all prompt templates"""

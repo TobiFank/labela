@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Body
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .database import init_db
 from .models import (
@@ -25,6 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/examples", StaticFiles(directory="data/examples"), name="examples")
 
 @app.post("/generate-caption", response_model=CaptionResponse)
 async def generate_caption(
