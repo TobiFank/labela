@@ -10,9 +10,9 @@ from .models import (
     ProcessingStatus,
     BatchProcessingRequest,
     CaptionResponse,
-    ModelConfig, PromptTemplate
+    ModelConfig, PromptTemplate, SettingsUpdate
 )
-from .services import caption_service
+from .services import caption_service, settings_service
 
 init_db()
 app = FastAPI(title="Image Caption Generator API",
@@ -160,6 +160,28 @@ async def delete_prompt_template(template_id: str):
         if not caption_service.get_caption_service().delete_prompt_template(template_id):
             raise HTTPException(status_code=404, detail="Template not found")
         return {"message": "Template deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/settings")
+async def get_settings():
+    """Get user settings"""
+    try:
+        settings = settings_service.get_settings_service().get_settings()
+        if not settings:
+            raise HTTPException(status_code=404, detail="Settings not found")
+        return settings
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/settings")
+async def update_settings(settings: SettingsUpdate):
+    """Update user settings"""
+    try:
+        updated = settings_service.get_settings_service().update_settings(settings)
+        return updated
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -1,8 +1,6 @@
 // frontend/src/components/settings/SettingsModal.tsx
 import React, {useState} from 'react';
 import {ModelConfig, ProcessingConfig} from '@/lib/types';
-import PromptSettings from './tabs/PromptSettings';
-import ExamplesSettings from './tabs/ExamplesSettings';
 import ProcessingSettings from './tabs/ProcessingSettings';
 import ModelSettings from './tabs/ModelSettings';
 
@@ -15,7 +13,7 @@ interface SettingsModalProps {
     onUpdateProcessingConfig: (config: Partial<ProcessingConfig>) => void;
 }
 
-type TabType = 'prompt' | 'examples' | 'processing' | 'models';
+type TabType = 'processing' | 'models';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
                                                          isOpen,
@@ -25,7 +23,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                          onUpdateModelConfig,
                                                          onUpdateProcessingConfig,
                                                      }) => {
-    const [activeTab, setActiveTab] = useState<TabType>('prompt');
+    const [activeTab, setActiveTab] = useState<TabType>('models');
 
     if (!isOpen) return null;
 
@@ -44,7 +42,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
 
                     <div className="flex space-x-4 border-b mb-4">
-                        {(['prompt', 'examples', 'processing', 'models'] as TabType[]).map(tab => (
+                        {(['processing', 'models'] as TabType[]).map(tab => (
                             <button
                                 key={tab}
                                 className={`px-4 py-2 ${
@@ -60,18 +58,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
 
                     <div className="mb-6">
-                        {activeTab === 'prompt' && <PromptSettings/>}
-                        {activeTab === 'examples' && <ExamplesSettings/>}
-                        {activeTab === 'processing' && (
-                            <ProcessingSettings
-                                config={processingConfig}
-                                onUpdate={onUpdateProcessingConfig}
-                            />
-                        )}
                         {activeTab === 'models' && (
                             <ModelSettings
                                 config={modelConfig}
                                 onUpdate={onUpdateModelConfig}
+                            />
+                        )}
+                        {activeTab === 'processing' && (
+                            <ProcessingSettings
+                                config={processingConfig}
+                                onUpdate={onUpdateProcessingConfig}
                             />
                         )}
                     </div>

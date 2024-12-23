@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Optional, Literal
 
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Column, String, Boolean, DateTime, Integer
+from sqlalchemy import Column, String, Boolean, DateTime, Integer, Float
 
 from .database import Base
 
@@ -76,6 +76,18 @@ class PromptTemplate(BaseModel):
     isDefault: bool = False
 
 
+class SettingsUpdate(BaseModelWithConfig):
+    provider: Optional[str] = None
+    model: Optional[str] = None
+    api_key: Optional[str] = None
+    cost_per_token: Optional[float] = None
+    max_tokens: Optional[int] = None
+    temperature: Optional[float] = None
+    batch_size: Optional[int] = None
+    error_handling: Optional[Literal["continue", "stop"]] = None
+    concurrent_processing: Optional[int] = None
+
+
 class DBPromptTemplate(Base):
     __tablename__ = "prompt_templates"
 
@@ -93,3 +105,36 @@ class DBExample(Base):
     image_path = Column(String, nullable=False)
     caption = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class DBSettings(Base):
+    __tablename__ = "settings"
+
+    id = Column(String, primary_key=True)
+    user_id = Column(String, nullable=False, default="default")  # For future multi-user support
+    provider = Column(String, nullable=False)
+    model = Column(String, nullable=False)
+    api_key = Column(String, nullable=True)
+    cost_per_token = Column(Float, nullable=False)
+    max_tokens = Column(Integer, nullable=False)
+    temperature = Column(Float, nullable=False)
+    batch_size = Column(Integer, nullable=False, default=50)
+    error_handling = Column(String, nullable=False, default="continue")
+    concurrent_processing = Column(Integer, nullable=False, default=2)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "provider": self.provider,
+            "model": self.model,
+            "api_key": self.api_key,
+            "cost_per_token": self.cost_per_token,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "batch_size": self.batch_size,
+            "error_handling": self.error_handling,
+            "concurrent_processing": self.concurrent_processing
+        }
+

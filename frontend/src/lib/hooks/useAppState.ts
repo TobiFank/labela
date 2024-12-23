@@ -38,16 +38,61 @@ export function useAppState() {
     });
 
     useEffect(() => {
-        api.getPromptTemplates().then(templates => {
+        Promise.all([
+            api.getPromptTemplates(),
+            api.getExamples(),
+            api.getSettings()
+        ]).then(([templates, examples, settings]) => {
             setState(prev => ({
                 ...prev,
                 templates,
-                activeTemplate: templates[0] || DEFAULT_PROMPT_TEMPLATE
+                activeTemplate: templates[0] || DEFAULT_PROMPT_TEMPLATE,
+                examples,
+                modelConfig: {
+                    provider: settings.provider,
+                    model: settings.model,
+                    apiKey: settings.apiKey,
+                    costPerToken: settings.costPerToken,
+                    maxTokens: settings.maxTokens,
+                    temperature: settings.temperature,
+                },
+                processingConfig: {
+                    batchSize: settings.batchSize,
+                    errorHandling: settings.errorHandling,
+                    concurrentProcessing: settings.concurrentProcessing,
+                }
             }));
         });
-        api.getExamples().then(examples => {
-            setState(prev => ({...prev, examples}));
-        });
+    }, []);
+
+    const updateModelConfig = useCallback(async (config: Partial<ModelConfig>) => {
+        try {
+            await api.updateSettings(config);
+            setState(prev => ({
+                ...prev,
+                modelConfig: {
+                    ...prev.modelConfig,
+                    ...config
+                },
+            }));
+        } catch (error) {
+            console.error('Failed to update model config:', error);
+        }
+    }, []);
+
+    const updateProcessingConfig = useCallback(async (config: Partial<ProcessingConfig>) => {
+        try {
+            await api.updateSettings(config);
+            setState(prev => ({
+                ...prev,
+                processingConfig: {
+                    ...prev.processingConfig,
+                    ...config
+                },
+            }));
+        } catch (error) {
+            console.error('Failed to update processing config:', error);
+        }
     }, []);
 
     const createTemplate = useCallback(async (template: PromptTemplate) => {
@@ -124,19 +169,6 @@ export function useAppState() {
         setState(prev => ({...prev, currentView: view}));
     }, []);
 
-    const updateModelConfig = useCallback((config: Partial<ModelConfig>) => {
-        setState(prev => ({
-            ...prev,
-            modelConfig: {...prev.modelConfig, ...config},
-        }));
-    }, []);
-
-    const updateProcessingConfig = useCallback((config: Partial<ProcessingConfig>) => {
-        setState(prev => ({
-            ...prev,
-            processingConfig: {...prev.processingConfig, ...config},
-        }));
-    }, []);
 
     const addExample = useCallback(async (image: File, caption: string) => {
         const newExample = await api.uploadExamplePair(image, caption);

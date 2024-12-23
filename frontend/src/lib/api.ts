@@ -134,6 +134,43 @@ class ApiClient {
         if (!response.ok) throw new Error('Failed to fetch examples');
         return response.json();
     }
+
+    async getSettings(): Promise<ModelConfig & ProcessingConfig> {
+        const response = await fetch(`${this.baseUrl}/settings`);
+        if (!response.ok) {
+            if (response.status === 404) {
+                // Return default settings if none exist
+                return {
+                    provider: 'openai',
+                    model: 'gpt-4-vision-preview',
+                    apiKey: '',
+                    costPerToken: 0.01,
+                    maxTokens: 1000,
+                    temperature: 0.5,
+                    batchSize: 50,
+                    errorHandling: 'continue' as const,
+                    concurrentProcessing: 2
+                };
+            }
+            throw new Error('Failed to fetch settings');
+        }
+        return response.json();
+    }
+
+    async updateSettings(settings: Partial<ModelConfig & ProcessingConfig>): Promise<ModelConfig & ProcessingConfig> {
+        const response = await fetch(`${this.baseUrl}/settings`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(settings),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update settings');
+        }
+        return response.json();
+    }
 }
 
 export const api = new ApiClient();
