@@ -80,7 +80,14 @@ const PromptPanel: React.FC<PromptPanelProps> = ({
                         </button>
                         {!activeTemplate.isDefault && (
                             <button
-                                onClick={() => onTemplateDelete(activeTemplate.id)}
+                                onClick={async () => {
+                                    try {
+                                        onTemplateDelete(activeTemplate.id);
+                                    } catch (error) {
+                                        console.error('Failed to delete template:', error);
+                                        // Optionally show error message to user
+                                    }
+                                }}
                                 className="p-1 hover:bg-gray-100 rounded text-red-600"
                             >
                                 <Trash2 className="w-4 h-4"/>

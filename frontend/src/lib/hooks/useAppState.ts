@@ -78,11 +78,36 @@ export function useAppState() {
         }
     }, []);
 
-    const deleteTemplate = useCallback((templateId: string) => {
-        setState(prev => ({
-            ...prev,
-            templates: prev.templates.filter(t => t.id !== templateId)
-        }));
+    // In useAppState.ts
+
+    const deleteTemplate = useCallback(async (templateId: string) => {
+        try {
+            // First, call the API to delete the template
+            await api.deletePromptTemplate(templateId);
+
+            // Only update the state if the API call was successful
+            setState(prev => {
+                // Get the default template to fall back to
+                const defaultTemplate = prev.templates.find(t => t.isDefault) || DEFAULT_PROMPT_TEMPLATE;
+
+                // Remove the template from the list
+                const updatedTemplates = prev.templates.filter(t => t.id !== templateId);
+
+                // If we're deleting the active template, switch to the default template
+                const newActiveTemplate = prev.activeTemplate.id === templateId
+                    ? defaultTemplate
+                    : prev.activeTemplate;
+
+                return {
+                    ...prev,
+                    templates: updatedTemplates,
+                    activeTemplate: newActiveTemplate
+                };
+            });
+        } catch (error) {
+            console.error('Failed to delete template:', error);
+            // You might want to show an error message to the user here
+        }
     }, []);
 
     const setActiveTemplate = useCallback((template: PromptTemplate) => {
