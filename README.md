@@ -1,4 +1,6 @@
-# Image Caption Generator
+[![License: Custom Non-Commercial](https://img.shields.io/badge/License-Custom%20Non--Commercial-red.svg)](LICENSE.md)
+
+# Labela: Image Caption Generator
 
 A modern web application for generating and managing image captions using various AI models.
 
@@ -103,13 +105,24 @@ poetry run uvicorn app.main:app --reload
 ```
 
 ## Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a new Pull Request
+Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting changes.
 
 ## License
+This project is licensed under a Custom Non-Commercial License. See [LICENSE](LICENSE.md) for full details.
 
-[Your chosen license]
+## Acknowledgments
+- Anthropic, OpenAI, and the Huggingface team for their excellent models
+- The open-source community for various supporting libraries
+- All contributors who have helped improve this project
+
+## Support My Work
+
+If you find Labela useful and want to help me keep developing innovative, open-source tools, consider supporting me by buying me a token. Your support helps cover development costs and allows me to create more projects like this!
+
+[Buy me a token!](https://buymeacoffee.com/TobiFank)
+
+Or, scan the QR code below to contribute:
+
+![Buy me a token QR Code](images/buymeatokenqr.png)
+
+Thank you for your support! It truly makes a difference.
