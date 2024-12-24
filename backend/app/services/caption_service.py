@@ -74,7 +74,6 @@ class CaptionService:
     async def generate_single_caption(
             self,
             image_file: UploadFile,
-            example_files: Optional[List[UploadFile]] = None,
             model_config: Optional[ModelConfig] = None
     ) -> str:
         logger = logging.getLogger(__name__)
@@ -117,7 +116,7 @@ class CaptionService:
             active_template = self._get_active_template()
             logger.info(f"Got active template: {active_template.name if active_template else 'None'}")
 
-            examples = self._examples if self._examples else []
+            examples = self.load_examples()
             logger.info(f"Got {len(examples)} examples")
 
             # Generate caption

@@ -37,20 +37,13 @@ app.add_middleware(
 
 @app.post("/generate-caption", response_model=CaptionResponse)
 async def generate_caption(
-        image: UploadFile = File(...),
-        examples: Optional[List[UploadFile]] = File(None)
+        image: UploadFile = File(...)
 ):
     logger = logging.getLogger(__name__)
     logger.info("=== Starting Caption Generation Request ===")
 
     # Log image details
     logger.info(f"Received image: {image.filename} ({image.content_type})")
-
-    # Log examples if provided
-    if examples:
-        logger.info(f"Received {len(examples)} example pairs:")
-        for idx, example in enumerate(examples):
-            logger.info(f"  Example {idx + 1}: {example.filename}")
 
     try:
         # Get settings and log them
@@ -73,7 +66,6 @@ async def generate_caption(
 
         caption = await caption_service.get_caption_service().generate_single_caption(
             image_file=image,
-            example_files=examples,
             model_config=model_config
         )
 

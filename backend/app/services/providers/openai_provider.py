@@ -33,16 +33,18 @@ class OpenAIProvider(BaseProvider):
 
         logger.info("Starting caption generation process")
         try:
-            # Initialize messages array
-            messages = []
+            # Initialize messages array with a generic system prompt
+            messages = [{
+                "role": "system",
+                "content": "You are a highly accurate image captioning assistant. Your task is to generate detailed, accurate captions for images based on what you can directly observe. Follow the user's instructions carefully for the desired captioning style and format."
+            }]
 
             # Add examples first if provided
             if examples:
                 logger.info(f"Processing {len(examples)} example pairs")
-                for example in examples:
+                for i, example in enumerate(examples):
                     try:
-                        # Get the actual file path from the URL
-                        logger.info(f"Processing example: {example.filename}")
+                        logger.info(f"Processing example {i+1}: {example.filename}")
                         image_path = example.image.replace('http://localhost:8000/api/examples/', '')
                         image_path = os.path.join('data/examples', image_path)
 
@@ -50,28 +52,44 @@ class OpenAIProvider(BaseProvider):
                             logger.error(f"Example image not found at path: {image_path}")
                             continue
 
-                        # Add user message with example image
+                        # For first example, include the template/prompt
                         with open(image_path, 'rb') as img_file:
                             example_base64 = base64.b64encode(img_file.read()).decode()
 
-                        messages.append({
-                            "role": "user",
-                            "content": [
-                                {"type": "text", "text": "Describe this image:"},
-                                {
-                                    "type": "image_url",
-                                    "image_url": {
-                                        "url": f"data:image/jpeg;base64,{example_base64}"
+                        if i == 0 and template:
+                            messages.append({
+                                "role": "user",
+                                "content": [
+                                    {"type": "text", "text": template},
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {
+                                            "url": f"data:image/jpeg;base64,{example_base64}"
+                                        }
                                     }
-                                }
-                            ]
-                        })
+                                ]
+                            })
+                        else:
+                            # For subsequent examples, just the image
+                            messages.append({
+                                "role": "user",
+                                "content": [
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {
+                                            "url": f"data:image/jpeg;base64,{example_base64}"
+                                        }
+                                    }
+                                ]
+                            })
 
-                        # Add assistant's response with the caption
+                        # Add assistant's example response
                         messages.append({
                             "role": "assistant",
                             "content": example.caption
                         })
+
+                        logger.info(f"Added example {i+1} with caption: {example.caption[:100]}...")
 
                     except Exception as e:
                         logger.error(f"Failed to process example {example.filename}: {str(e)}")
@@ -82,29 +100,36 @@ class OpenAIProvider(BaseProvider):
             image.save(buffered, format="JPEG")
             image_base64 = base64.b64encode(buffered.getvalue()).decode()
 
-            # Add the prompt template if provided
-            prompt_text = template if template else "Describe this image in detail:"
-
-            # Add the target image message
-            messages.append({
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt_text},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{image_base64}"
+            # Add the target image message (if no examples/template were provided, include the template here)
+            if not examples and template:
+                messages.append({
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": template},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{image_base64}"
+                            }
                         }
-                    }
-                ]
-            })
+                    ]
+                })
+            else:
+                messages.append({
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{image_base64}"
+                            }
+                        }
+                    ]
+                })
 
-            logger.debug(f"Config: {self.config}")
-            logger.debug(f"Messages: {messages}")
-
-            logger.info("Making API call to OpenAI")
+            logger.info(f"Final message array has {len(messages)} messages")
             response = await self.client.chat.completions.create(
-                model=self.config.model,  # Using models like gpt-4o, gpt-4o-mini, gpt-4-turbo, or gpt-4v
+                model=self.config.model,
                 messages=messages,
                 max_tokens=self.config.max_tokens,
                 temperature=self.config.temperature
