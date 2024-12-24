@@ -63,19 +63,33 @@ export function useAppState() {
 
     const updateModelConfig = useCallback(async (config: Partial<ModelConfig>) => {
         try {
-            const updatedConfig = {
-                ...state.modelConfig,
-                ...config
-            };
-            const updatedSettings = await api.updateSettings(updatedConfig);
-            setState(prev => ({
-                ...prev,
-                modelConfig: updatedSettings
-            }));
+            setState(prev => {
+                const updatedConfig = {
+                    ...prev.modelConfig,
+                    ...config
+                };
+                // Update settings in the background
+                api.updateSettings(updatedConfig)
+                    .then(updatedSettings => {
+                        setState(prevState => ({
+                            ...prevState,
+                            modelConfig: updatedSettings
+                        }));
+                    })
+                    .catch(error => {
+                        console.error('Failed to update model config:', error);
+                    });
+
+                // Immediately update local state
+                return {
+                    ...prev,
+                    modelConfig: updatedConfig
+                };
+            });
         } catch (error) {
             console.error('Failed to update model config:', error);
         }
-    }, [state.modelConfig]);
+    }, []);
 
     const updateProcessingConfig = useCallback(async (config: Partial<ProcessingConfig>) => {
         try {

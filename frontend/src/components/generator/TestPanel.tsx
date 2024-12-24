@@ -85,21 +85,30 @@ const TestPanel: React.FC<TestPanelProps> = ({onGenerateCaption, modelConfig}) =
                 </CardHeader>
                 <CardContent>
                     <div className="flex justify-between items-center">
+                        <div className="flex-1">
+                            {generatedCaption ? (
+                                <p className="text-gray-700 whitespace-pre-wrap">{generatedCaption}</p>
+                            ) : (
+                                <p className="text-gray-500 italic">No caption generated yet</p>
+                            )}
+                        </div>
                         <div className="flex gap-2">
+                            {generatedCaption && (
+                                <button
+                                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                                    onClick={handleCopy}
+                                >
+                                    <Copy className="w-4 h-4"/>
+                                </button>
+                            )}
                             <button
-                                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                                onClick={handleCopy}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300"
+                                onClick={handleGenerate}
+                                disabled={!selectedImage || isGenerating}
                             >
-                                <Copy className="w-4 h-4"/>
+                                {isGenerating ? 'Generating...' : 'Generate'}
                             </button>
                         </div>
-                        <button
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300"
-                            onClick={handleGenerate}
-                            disabled={!selectedImage || isGenerating}
-                        >
-                            {isGenerating ? 'Generating...' : 'Generate'}
-                        </button>
                     </div>
                 </CardContent>
             </Card>
