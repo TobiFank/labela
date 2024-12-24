@@ -1,5 +1,6 @@
 # backend/app/main.py
-from typing import List, Optional
+import logging
+from typing import List
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Body
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,12 +15,10 @@ from .models import (
 )
 from .services import caption_service, settings_service
 
-import logging
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-
 
 init_db()
 app = FastAPI(title="Image Caption Generator API",
@@ -235,6 +234,24 @@ async def save_test_image(image: UploadFile = File(...)):
 @app.get("/test-image")
 async def get_test_image():
     return caption_service.get_caption_service().get_test_image()
+
+
+@app.post("/batch-process/pause")
+async def pause_batch_processing():
+    try:
+        caption_service.get_caption_service().pause_processing()
+        return {"message": "Batch processing paused"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/batch-process/resume")
+async def resume_batch_processing():
+    try:
+        caption_service.get_caption_service().resume_processing()
+        return {"message": "Batch processing resumed"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 caption_service.initialize_service()

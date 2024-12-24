@@ -43,6 +43,7 @@ export function useAppState() {
         isProcessing: false,
         templates: [DEFAULT_PROMPT_TEMPLATE],
         activeTemplate: DEFAULT_PROMPT_TEMPLATE,
+        isPaused: false,
     });
 
     useEffect(() => {
@@ -67,6 +68,24 @@ export function useAppState() {
                 }
             }));
         });
+    }, []);
+
+    const pauseProcessing = useCallback(async () => {
+        try {
+            await api.pauseBatchProcessing();
+            setState(prev => ({ ...prev, isPaused: true }));
+        } catch (error) {
+            console.error('Failed to pause processing:', error);
+        }
+    }, []);
+
+    const resumeProcessing = useCallback(async () => {
+        try {
+            await api.resumeBatchProcessing();
+            setState(prev => ({ ...prev, isPaused: false }));
+        } catch (error) {
+            console.error('Failed to resume processing:', error);
+        }
     }, []);
 
     const updateModelConfig = useCallback(async (config: Partial<ModelConfig>) => {
@@ -212,27 +231,38 @@ export function useAppState() {
     }, []);
 
     const startProcessing = useCallback(async (folder: string) => {
-        setState(prev => ({...prev, isProcessing: true}));
+        setState(prev => ({...prev, isProcessing: true, isPaused: false}));
         await api.startBatchProcessing(folder);
 
-        // Start polling for status
-        const intervalId = setInterval(async () => {
-            const status = await api.getProcessingStatus();
-            setState(prev => ({
-                ...prev,
-                processedItems: status.processedItems,
-                isProcessing: status.status !== 'completed',
-            }));
+        let intervalId: NodeJS.Timeout;
+        const startPolling = () => {
+            intervalId = setInterval(async () => {
+                const status = await api.getProcessingStatus();
+                setState(prev => {
+                    if (!prev.isProcessing) {
+                        clearInterval(intervalId);
+                        return prev;
+                    }
+                    return {
+                        ...prev,
+                        processedItems: status.processedItems,
+                        isProcessing: status.status !== 'completed',
+                    };
+                });
 
-            if (status.status === 'completed') {
-                clearInterval(intervalId);
-            }
-        }, 1000);
+                if (status.status === 'completed') {
+                    clearInterval(intervalId);
+                }
+            }, 1000);
+        };
+        startPolling();
+
+        return () => clearInterval(intervalId); // Cleanup function
     }, []);
 
     const stopProcessing = useCallback(async () => {
         await api.stopBatchProcessing();
-        setState(prev => ({...prev, isProcessing: false}));
+        setState(prev => ({...prev, isProcessing: false, isPause: false}));
     }, []);
 
     const generateCaption = useCallback(async (image: File) => {
@@ -248,6 +278,8 @@ export function useAppState() {
         removeExample,
         startProcessing,
         stopProcessing,
+        pauseProcessing,
+        resumeProcessing,
         generateCaption,
         createTemplate,
         updateTemplate,

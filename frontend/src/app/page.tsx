@@ -18,6 +18,8 @@ const AppPage = () => {
         removeExample,
         startProcessing,
         stopProcessing,
+        pauseProcessing,
+        resumeProcessing,
         generateCaption,
         updateTemplate,
         createTemplate,
@@ -52,9 +54,12 @@ const AppPage = () => {
             ) : (
                 <BatchProcessingView
                     isProcessing={state.isProcessing}
+                    isPaused={state.isPaused}
                     processedItems={state.processedItems}
                     onStartProcessing={startProcessing}
                     onStopProcessing={stopProcessing}
+                    onPauseProcessing={pauseProcessing}
+                    onResumeProcessing={resumeProcessing}
                     modelConfig={state.modelConfig}
                 />
             )}

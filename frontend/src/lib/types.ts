@@ -60,6 +60,7 @@ export interface AppState {
     isProcessing: boolean;
     templates: PromptTemplate[];
     activeTemplate: PromptTemplate;
+    isPaused: boolean;
 }
 
 export function countTokens(template: PromptTemplate, examples: ExamplePair[]): TokenCount {

@@ -10,6 +10,9 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - ./data/examples:/app/data/examples
+      - ./data/input:/app/data/input
+      - ./data/output:/app/data/output
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:8000

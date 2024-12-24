@@ -140,8 +140,8 @@ class DBProcessedItem(Base):
     id = Column(String, primary_key=True)
     filename = Column(String, nullable=False)
     image_path = Column(String, nullable=False)
-    caption = Column(String, nullable=False)
+    caption = Column(String, nullable=True)
     status = Column(String, nullable=False)  # 'pending', 'processing', 'completed', 'error'
-    error_message = Column(String)
+    error_message = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     batch_id = Column(String, nullable=False)

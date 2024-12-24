@@ -1,17 +1,19 @@
 // frontend/src/components/batch_processing/StatusSection.tsx
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FolderOpen, Pause, Play } from 'lucide-react';
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {FolderOpen, Pause, Play, Square} from 'lucide-react';
 
 interface StatusSectionProps {
-    sourceFolder: string;
-    isProcessing: boolean;
-    onFolderSelectClick: () => void;
-    onProcessingToggle: () => void;
-    processedCount: number;
-    totalCount: number;
-    startTime?: Date;
-    costPerToken: number;
+    sourceFolder: string,
+    isProcessing: boolean,
+    onFolderSelectClick: () => void,
+    onProcessingToggle: () => void,
+    onStopProcessing: () => void,
+    processedCount: number,
+    totalCount: number,
+    startTime?: Date,
+    costPerToken: number,
+    isPaused?: boolean
 }
 
 // Utility functions
@@ -70,7 +72,9 @@ const StatusSection: React.FC<StatusSectionProps> = ({
                                                          processedCount,
                                                          totalCount,
                                                          startTime,
-                                                         costPerToken
+                                                         costPerToken,
+                                                         isPaused,
+    onStopProcessing
                                                      }) => {
     const progress = totalCount > 0 ? (processedCount / totalCount) * 100 : 0;
     const estimatedTimeLeft = calculateTimeLeft(processedCount, totalCount, startTime);
@@ -121,22 +125,41 @@ const StatusSection: React.FC<StatusSectionProps> = ({
                             />
                         </div>
                     </div>
-                    <div className="flex justify-center">
+                    <div className="flex justify-center gap-2">
                         {isProcessing ? (
-                            <button
-                                className="px-6 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 flex items-center gap-2"
-                                onClick={onProcessingToggle}
-                            >
-                                <Pause className="w-4 h-4"/>
-                                Pause Processing
-                            </button>
+                            <>
+                                {isPaused ? (
+                                    <button
+                                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                                        onClick={onProcessingToggle}
+                                    >
+                                        <Play className="w-4 h-4"/>
+                                        Resume Processing
+                                    </button>
+                                ) : (
+                                    <button
+                                        className="px-6 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 flex items-center gap-2"
+                                        onClick={onProcessingToggle}
+                                    >
+                                        <Pause className="w-4 h-4"/>
+                                        Pause Processing
+                                    </button>
+                                )}
+                                <button
+                                    className="px-6 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 flex items-center gap-2"
+                                    onClick={onStopProcessing}
+                                >
+                                    <Square className="w-4 h-4"/>
+                                    Stop
+                                </button>
+                            </>
                         ) : (
                             <button
                                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
                                 onClick={onProcessingToggle}
                             >
                                 <Play className="w-4 h-4"/>
-                                {processedCount === 0 ? 'Start Processing' : 'Resume Processing'}
+                                Start Processing
                             </button>
                         )}
                     </div>

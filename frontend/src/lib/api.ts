@@ -27,13 +27,21 @@ class ApiClient {
         }
     }
 
-    async startBatchProcessing(folder: string): Promise<void> {
+    async startBatchProcessing(
+        folder: string,
+        modelConfig: ModelConfig,
+        processingConfig: ProcessingConfig
+    ): Promise<void> {
         const response = await fetch(`${this.baseUrl}/batch-process`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({folder}),
+            body: JSON.stringify({
+                folder_path: folder,
+                model_settings: modelConfig,
+                processing_settings: processingConfig
+            }),
         });
 
         if (!response.ok) {
@@ -211,6 +219,24 @@ class ApiClient {
 
         // Transform response back to camelCase
         return this.getSettings();  // Reuse our transformation logic
+    }
+
+    async pauseBatchProcessing(): Promise<void> {
+        const response = await fetch(`${this.baseUrl}/batch-process/pause`, {
+            method: 'POST'
+        });
+        if (!response.ok) {
+            throw new Error('Failed to pause batch processing');
+        }
+    }
+
+    async resumeBatchProcessing(): Promise<void> {
+        const response = await fetch(`${this.baseUrl}/batch-process/resume`, {
+            method: 'POST'
+        });
+        if (!response.ok) {
+            throw new Error('Failed to resume batch processing');
+        }
     }
 }
 

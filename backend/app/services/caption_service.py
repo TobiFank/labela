@@ -164,17 +164,12 @@ class CaptionService:
             self._process_batch(folder_path, model_config, processing_config or ProcessingConfig())
         )
 
-    async def _process_batch(
-            self,
-            folder_path: str,
-            model_config: ModelConfig,
-            processing_config: ProcessingConfig
-    ):
+    async def _process_batch(self, folder_path: str, model_config: ModelConfig, processing_config: ProcessingConfig):
         try:
             provider = self._providers[model_config.provider]
             provider.configure(model_config)
 
-            # Get list of all image files
+            # Get list of all image files (keep existing code)
             image_files = [
                 f for f in os.listdir(folder_path)
                 if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
@@ -186,16 +181,21 @@ class CaptionService:
                 if not self._processing:
                     break
 
+                # Add pause check
+                while self._paused:
+                    await asyncio.sleep(1)
+                    if not self._processing:  # Allow stopping while paused
+                        break
+
                 batch = image_files[i:i + processing_config.batch_size]
                 self._current_batch += 1
 
-                # Create tasks for concurrent processing
+                # Rest of the existing batch processing code
                 tasks = []
                 for filename in batch:
                     filepath = os.path.join(folder_path, filename)
                     tasks.append(self._process_single_image(filepath, provider))
 
-                # Process batch with concurrency limit
                 for batch_result in asyncio.as_completed(tasks, limit=processing_config.concurrent_processing):
                     try:
                         processed_item = await batch_result
@@ -206,7 +206,6 @@ class CaptionService:
                         # Log error and continue
 
         except Exception as e:
-            # Log error
             print(f"Batch processing error: {str(e)}")
         finally:
             self._processing = False
@@ -273,6 +272,14 @@ class CaptionService:
             processing_speed=processing_speed,
             total_cost=self._total_cost
         )
+
+    def pause_processing(self):
+        """Pause the current processing"""
+        self._paused = True
+
+    def resume_processing(self):
+        """Resume paused processing"""
+        self._paused = False
 
     async def save_example(self, image: UploadFile, caption: str) -> ExamplePair:
         try:

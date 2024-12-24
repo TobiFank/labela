@@ -9,17 +9,23 @@ import QuickReview from './QuickReview';
 
 interface BatchProcessingViewProps {
     isProcessing: boolean;
+    isPaused: boolean;
     processedItems: ProcessedItem[];
     onStartProcessing: (folder: string) => Promise<void>;
     onStopProcessing: () => Promise<void>;
+    onPauseProcessing: () => Promise<void>;
+    onResumeProcessing: () => Promise<void>;
     modelConfig: ModelConfig;
 }
 
 const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                                                                      isProcessing,
+                                                                     isPaused,
                                                                      processedItems,
                                                                      onStartProcessing,
                                                                      onStopProcessing,
+                                                                     onPauseProcessing,
+                                                                     onResumeProcessing,
                                                                      modelConfig
                                                                  }) => {
     const [selectedImage, setSelectedImage] = useState<ProcessedItem | null>(null);
@@ -42,8 +48,13 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                 <StatusSection
                     sourceFolder={sourceFolder}
                     isProcessing={isProcessing}
+                    isPaused={isPaused}
                     onFolderSelectClick={() => setShowFolderSelect(true)}
-                    onProcessingToggle={isProcessing ? onStopProcessing : () => onStartProcessing(sourceFolder)}
+                    onProcessingToggle={isProcessing ?
+                        (isPaused ? onResumeProcessing : onPauseProcessing) :
+                        () => onStartProcessing(sourceFolder)
+                    }
+                    onStopProcessing={onStopProcessing}
                     processedCount={processedItems.length}
                     totalCount={1234}
                     startTime={startTime}
