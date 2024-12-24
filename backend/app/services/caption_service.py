@@ -1,5 +1,6 @@
 # backend/app/services/caption_service.py
 import asyncio
+import logging
 import os
 import uuid
 from datetime import datetime, timedelta
@@ -19,6 +20,8 @@ from ..models import (
     ProcessingStatus,
     ExamplePair, PromptTemplate, DBPromptTemplate, DBExample
 )
+
+logger = logging.getLogger(__name__)
 
 
 class CaptionService:
@@ -41,34 +44,105 @@ class CaptionService:
         self._examples = self.load_examples()
         self._templates = self.get_prompt_templates()
 
+    def _get_active_template(self):
+        """Gets the current active template or falls back to default"""
+        try:
+            with SessionLocal() as db:
+                # First try to get the default template
+                template = db.query(DBPromptTemplate).filter(DBPromptTemplate.is_default == True).first()
+                if not template:
+                    # If no default template exists, create one
+                    template = DBPromptTemplate(
+                        id=str(uuid.uuid4()),
+                        name="Default Template",
+                        content="Generate a detailed caption for this image that describes its key features and content.",
+                        is_default=True
+                    )
+                    db.add(template)
+                    db.commit()
+                    db.refresh(template)
+                return PromptTemplate(
+                    id=template.id,
+                    name=template.name,
+                    content=template.content,
+                    isDefault=template.is_default
+                )
+        except Exception as e:
+            logger.error(f"Error getting active template: {str(e)}")
+            return None
+
     async def generate_single_caption(
             self,
             image_file: UploadFile,
             example_files: Optional[List[UploadFile]] = None,
             model_config: Optional[ModelConfig] = None
     ) -> str:
-        # Save uploaded image temporarily
-        temp_image_path = f"temp_{image_file.filename}"
+        logger = logging.getLogger(__name__)
+        logger.info("Starting caption generation process")
+
+        # Create temp directory if it doesn't exist
         try:
+            os.makedirs("data/temp", exist_ok=True)
+            temp_image_path = os.path.join("data/temp", f"temp_{image_file.filename}")
+            logger.info(f"Created temp directory and path: {temp_image_path}")
+        except Exception as e:
+            logger.error(f"Failed to create temp directory: {str(e)}")
+            raise
+
+        try:
+            # Save uploaded image temporarily
+            logger.info("Attempting to save uploaded file")
             async with aiofiles.open(temp_image_path, 'wb') as out_file:
                 content = await image_file.read()
                 await out_file.write(content)
+            logger.info("Successfully saved uploaded file")
 
             # Load image using PIL
+            logger.info("Attempting to load image with PIL")
             image = Image.open(temp_image_path)
+            logger.info("Successfully loaded image with PIL")
 
             # Get the appropriate provider
+            if model_config.provider not in self._providers:
+                logger.error(f"Unsupported provider: {model_config.provider}")
+                raise ValueError(f"Unsupported provider: {model_config.provider}")
+
             provider = self._providers[model_config.provider]
+            logger.info(f"Got provider for {model_config.provider}")
+
             provider.configure(model_config)
+            logger.info("Configured provider")
+
+            # Load active template and examples
+            active_template = self._get_active_template()
+            logger.info(f"Got active template: {active_template.name if active_template else 'None'}")
+
+            examples = self._examples if self._examples else []
+            logger.info(f"Got {len(examples)} examples")
 
             # Generate caption
-            caption = await provider.generate_caption(image)
+            logger.info("Starting caption generation with provider")
+            caption = await provider.generate_caption(
+                image=image,
+                template=active_template.content if active_template else None,
+                examples=examples
+            )
+            logger.info("Successfully generated caption")
 
             return caption
+        except Exception as e:
+            logger.error(f"Caption generation failed: {str(e)}")
+            logger.error(f"Error type: {type(e)}")
+            logger.error(f"Error details: {str(e)}", exc_info=True)  # This will log the full traceback
+            raise RuntimeError(f"Caption generation failed: {str(e)}")
         finally:
             # Cleanup
-            if os.path.exists(temp_image_path):
-                os.remove(temp_image_path)
+            try:
+                if os.path.exists(temp_image_path):
+                    os.remove(temp_image_path)
+                    logger.info("Cleaned up temporary file")
+            except Exception as e:
+                logger.error(f"Failed to clean up temporary file: {str(e)}")
 
     def start_batch_processing(
             self,
@@ -202,30 +276,34 @@ class CaptionService:
 
     async def save_example(self, image: UploadFile, caption: str) -> ExamplePair:
         try:
-            # Save file to disk
+            # Create examples directory if it doesn't exist
             os.makedirs("data/examples", exist_ok=True)
+
+            # Generate unique filename with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{timestamp}_{image.filename}"
             filepath = os.path.join("data/examples", filename)
 
+            # Save file
             async with aiofiles.open(filepath, 'wb') as out_file:
                 content = await image.read()
                 await out_file.write(content)
 
-            # Save to database
+            # Create database entry
             with SessionLocal() as db:
                 db_example = DBExample(
                     filename=filename,
-                    image_path=filepath,
+                    image_path=filepath,  # Store the full filepath
                     caption=caption
                 )
                 db.add(db_example)
                 db.commit()
                 db.refresh(db_example)
 
+                # Return with URL for frontend
                 return ExamplePair(
                     id=db_example.id,
-                    image=f"http://localhost:8000/api/examples/{filename}",
+                    image=f"/api/examples/{filename}",  # Remove the host part
                     filename=filename,
                     caption=caption
                 )

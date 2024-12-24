@@ -5,7 +5,7 @@ import {api} from '../api';
 
 const DEFAULT_MODEL_CONFIG: ModelConfig = {
     provider: 'openai',
-    model: 'gpt-4-vision-preview',
+    model: 'gpt-4o',
     apiKey: '',
     costPerToken: 0.01,
     maxTokens: 1000,

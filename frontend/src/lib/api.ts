@@ -8,19 +8,23 @@ class ApiClient {
         const formData = new FormData();
         formData.append('image', image);
 
-        // We don't need to send the settings since the backend will use stored settings
-        const response = await fetch(`${this.baseUrl}/generate-caption`, {
-            method: 'POST',
-            body: formData,
-        });
+        try {
+            const response = await fetch(`${this.baseUrl}/generate-caption`, {
+                method: 'POST',
+                body: formData,
+            });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Failed to generate caption');
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to generate caption');
+            }
+
+            const data = await response.json();
+            return data.caption;
+        } catch (error) {
+            console.error('Caption generation failed:', error);
+            throw error;
         }
-
-        const data = await response.json();
-        return data.caption;
     }
 
     async startBatchProcessing(folder: string): Promise<void> {
@@ -142,7 +146,7 @@ class ApiClient {
             if (response.status === 404) {
                 return {
                     provider: 'openai',
-                    model: 'gpt-4-vision-preview',
+                    model: 'gpt-4o',
                     apiKey: '',
                     costPerToken: 0.01,
                     maxTokens: 1000,

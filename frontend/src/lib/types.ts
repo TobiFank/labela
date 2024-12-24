@@ -1,7 +1,7 @@
 // frontend/src/lib/types.ts
 
 export type Provider = 'openai' | 'huggingface';
-export type Model = 'gpt-4-vision-preview' | 'gpt-4' | 'gpt-3.5-turbo' | string;
+export type Model = 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo' | 'gpt-4v' | string;
 
 export interface ModelConfig {
     provider: Provider;

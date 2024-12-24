@@ -37,7 +37,7 @@ class SettingsService:
                 id=str(uuid.uuid4()),
                 user_id=user_id,
                 provider=settings_update.provider or "openai",
-                model=settings_update.model or "gpt-4-vision-preview",
+                model=settings_update.model or "gpt-4o",
                 api_key=settings_update.api_key or "",
                 cost_per_token=settings_update.cost_per_token or 0.01,
                 max_tokens=settings_update.max_tokens or 1000,

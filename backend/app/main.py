@@ -1,4 +1,5 @@
 # backend/app/main.py
+import logging
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Body
@@ -34,11 +35,17 @@ async def generate_caption(
         image: UploadFile = File(...),
         examples: Optional[List[UploadFile]] = File(None)
 ):
+    logger = logging.getLogger(__name__)
+    logger.info("Received caption generation request")
+
     try:
         # Get settings from database
+        logger.info("Fetching settings from database")
         settings = settings_service.get_settings_service().get_settings()
         if not settings:
+            logger.error("No settings configured")
             raise HTTPException(status_code=400, detail="No settings configured")
+        logger.info("Successfully fetched settings")
 
         # Create ModelConfig from settings
         model_config = ModelConfig(
@@ -49,14 +56,17 @@ async def generate_caption(
             max_tokens=settings['max_tokens'],
             temperature=settings['temperature']
         )
+        logger.info(f"Created ModelConfig with provider {model_config.provider} and model {model_config.model}")
 
         caption = await caption_service.get_caption_service().generate_single_caption(
             image_file=image,
             example_files=examples,
             model_config=model_config
         )
+        logger.info("Successfully generated caption")
         return CaptionResponse(caption=caption)
     except Exception as e:
+        logger.error(f"Error in generate_caption endpoint: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -187,7 +197,7 @@ async def get_settings():
         if not settings:
             return {
                 "provider": "openai",
-                "model": "gpt-4-vision-preview",
+                "model": "gpt-4o",
                 "api_key": "",
                 "cost_per_token": 0.01,
                 "max_tokens": 1000,
