@@ -1,12 +1,12 @@
 // frontend/src/components/settings/tabs/ModelSettings.tsx
 // frontend/src/components/settings/tabs/ModelSettings.tsx
 import React from 'react';
-import { ModelConfig } from '@/lib/types';
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
+import {ModelConfig} from '@/lib/types';
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Card, CardContent} from "@/components/ui/card";
+import {Slider} from "@/components/ui/slider";
 
 interface ModelSettingsProps {
     config: ModelConfig;
@@ -40,7 +40,7 @@ const ModelSettings: React.FC<ModelSettingsProps> = ({
                     onValueChange={(value) => handleChange('provider', value)}
                 >
                     <SelectTrigger>
-                        <SelectValue placeholder="Select provider" />
+                        <SelectValue placeholder="Select provider"/>
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="openai">OpenAI</SelectItem>
@@ -57,7 +57,7 @@ const ModelSettings: React.FC<ModelSettingsProps> = ({
                     onValueChange={(value) => handleChange('model', value)}
                 >
                     <SelectTrigger>
-                        <SelectValue placeholder="Select model" />
+                        <SelectValue placeholder="Select model"/>
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="gpt-4-vision-preview">GPT-4 Vision</SelectItem>
@@ -83,7 +83,16 @@ const ModelSettings: React.FC<ModelSettingsProps> = ({
 
             {/* Cost per token */}
             <div className="space-y-2">
-                <Label>Cost per 1K tokens ($)</Label>
+                <Label>
+                    Cost per 1K tokens ($)
+                    <span
+                        title="Visit OpenAI API Pricing page for more details"
+                        className="ml-2 text-blue-500 cursor-pointer"
+                        onClick={() => window.open('https://openai.com/api/pricing/', '_blank')}
+                    >
+            ℹ️
+        </span>
+                </Label>
                 <Input
                     type="number"
                     value={config.costPerToken}
@@ -95,6 +104,7 @@ const ModelSettings: React.FC<ModelSettingsProps> = ({
                     Cost per 1,000 tokens for the selected model
                 </p>
             </div>
+
 
             {/* Temperature Control */}
             <div className="space-y-2">

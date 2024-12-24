@@ -81,7 +81,7 @@
   dependencies:
     "@floating-ui/utils" "^0.2.8"
 
-"@floating-ui/dom@^1.0.0":
+"@floating-ui/dom@^1.0.0", "@floating-ui/dom@^1.6.1":
   version "1.6.12"
   resolved "https://registry.yarnpkg.com/@floating-ui/dom/-/dom-1.6.12.tgz#6333dcb5a8ead3b2bf82f33d6bc410e95f54e556"
   integrity sha512-NP83c0HjokcGVEMeoStg317VD9W7eDlGK7457dMBANbKA6GJZdc7rjujdgqzTaz93jkGgc5P/jeWbaCHnMNc+w==
@@ -1077,6 +1077,11 @@ class-variance-authority@^0.7.1:
   integrity sha512-Ka+9Trutv7G8M6WT6SeiRWz792K5qEqIGEGzXKhAE6xOWAY6pPH8U+9IY3oCMv6kqTmLsv7Xh/2w2RigkePMsg==
   dependencies:
     clsx "^2.1.1"
+
+classnames@^2.3.0:
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/classnames/-/classnames-2.5.1.tgz#ba774c614be0f016da105c858e7159eae8e7687b"
+  integrity sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==
 
 client-only@0.0.1:
   version "0.0.1"
@@ -2608,6 +2613,14 @@ react-style-singleton@^2.2.1, react-style-singleton@^2.2.2:
   dependencies:
     get-nonce "^1.0.0"
     tslib "^2.0.0"
+
+react-tooltip@^5.28.0:
+  version "5.28.0"
+  resolved "https://registry.yarnpkg.com/react-tooltip/-/react-tooltip-5.28.0.tgz#c7b5343ab2d740a428494a3d8315515af1f26f46"
+  integrity sha512-R5cO3JPPXk6FRbBHMO0rI9nkUG/JKfalBSQfZedZYzmqaZQgq7GLzF8vcCWx6IhUCKg0yPqJhXIzmIO5ff15xg==
+  dependencies:
+    "@floating-ui/dom" "^1.6.1"
+    classnames "^2.3.0"
 
 react@^19.0.0:
   version "19.0.0"
