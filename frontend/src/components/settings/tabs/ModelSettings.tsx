@@ -17,7 +17,10 @@ const ModelSettings: React.FC<ModelSettingsProps> = ({
                                                          onUpdate,
                                                      }) => {
     const handleChange = (key: keyof ModelConfig, value: string | number) => {
-        onUpdate({[key]: value});
+        onUpdate({
+            ...config,
+            [key]: value
+        });
     };
 
     return (

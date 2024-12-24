@@ -28,17 +28,32 @@ app.add_middleware(
 )
 
 
+# backend/app/main.py
 @app.post("/generate-caption", response_model=CaptionResponse)
 async def generate_caption(
         image: UploadFile = File(...),
-        examples: Optional[List[UploadFile]] = File(None),
-        model_settings: Optional[ModelConfig] = Body(None)
+        examples: Optional[List[UploadFile]] = File(None)
 ):
     try:
+        # Get settings from database
+        settings = settings_service.get_settings_service().get_settings()
+        if not settings:
+            raise HTTPException(status_code=400, detail="No settings configured")
+
+        # Create ModelConfig from settings
+        model_config = ModelConfig(
+            provider=settings['provider'],
+            model=settings['model'],
+            api_key=settings['api_key'],
+            cost_per_token=settings['cost_per_token'],
+            max_tokens=settings['max_tokens'],
+            temperature=settings['temperature']
+        )
+
         caption = await caption_service.get_caption_service().generate_single_caption(
             image_file=image,
             example_files=examples,
-            model_config=model_settings
+            model_config=model_config
         )
         return CaptionResponse(caption=caption)
     except Exception as e:
@@ -170,9 +185,20 @@ async def get_settings():
     try:
         settings = settings_service.get_settings_service().get_settings()
         if not settings:
-            raise HTTPException(status_code=404, detail="Settings not found")
+            return {
+                "provider": "openai",
+                "model": "gpt-4-vision-preview",
+                "api_key": "",
+                "cost_per_token": 0.01,
+                "max_tokens": 1000,
+                "temperature": 0.7,
+                "batch_size": 50,
+                "error_handling": "continue",
+                "concurrent_processing": 2
+            }
         return settings
     except Exception as e:
+        print(f"Error getting settings: {str(e)}")  # Add logging
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -184,6 +210,16 @@ async def update_settings(settings: SettingsUpdate):
         return updated
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/test-image")
+async def save_test_image(image: UploadFile = File(...)):
+    return await caption_service.get_caption_service().save_test_image(image)
+
+
+@app.get("/test-image")
+async def get_test_image():
+    return caption_service.get_caption_service().get_test_image()
 
 
 caption_service.initialize_service()

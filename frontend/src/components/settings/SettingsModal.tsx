@@ -1,5 +1,5 @@
 // frontend/src/components/settings/SettingsModal.tsx
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {ModelConfig, ProcessingConfig} from '@/lib/types';
 import ProcessingSettings from './tabs/ProcessingSettings';
 import ModelSettings from './tabs/ModelSettings';
@@ -24,6 +24,22 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                          onUpdateProcessingConfig,
                                                      }) => {
     const [activeTab, setActiveTab] = useState<TabType>('models');
+    const [localModelConfig, setLocalModelConfig] = useState(modelConfig);
+    const [localProcessingConfig, setLocalProcessingConfig] = useState(processingConfig);
+
+    // Reset local state when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setLocalModelConfig(modelConfig);
+            setLocalProcessingConfig(processingConfig);
+        }
+    }, [isOpen, modelConfig, processingConfig]);
+
+    const handleSave = () => {
+        onUpdateModelConfig(localModelConfig);
+        onUpdateProcessingConfig(localProcessingConfig);
+        onClose();
+    };
 
     if (!isOpen) return null;
 
@@ -81,7 +97,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         </button>
                         <button
                             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                            onClick={onClose}
+                            onClick={handleSave}
                         >
                             Save Changes
                         </button>

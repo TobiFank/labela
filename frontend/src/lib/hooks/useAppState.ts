@@ -38,28 +38,25 @@ export function useAppState() {
     });
 
     useEffect(() => {
+        // Load all initial data
         Promise.all([
             api.getPromptTemplates(),
             api.getExamples(),
             api.getSettings()
         ]).then(([templates, examples, settings]) => {
+            console.log('Loaded settings:', settings); // Add logging
             setState(prev => ({
                 ...prev,
                 templates,
                 activeTemplate: templates[0] || DEFAULT_PROMPT_TEMPLATE,
                 examples,
                 modelConfig: {
-                    provider: settings.provider,
-                    model: settings.model,
-                    apiKey: settings.apiKey,
-                    costPerToken: settings.costPerToken,
-                    maxTokens: settings.maxTokens,
-                    temperature: settings.temperature,
+                    ...DEFAULT_MODEL_CONFIG, // Keep default values as fallback
+                    ...settings, // Override with loaded settings
                 },
                 processingConfig: {
-                    batchSize: settings.batchSize,
-                    errorHandling: settings.errorHandling,
-                    concurrentProcessing: settings.concurrentProcessing,
+                    ...DEFAULT_PROCESSING_CONFIG,
+                    ...settings,
                 }
             }));
         });
@@ -67,22 +64,30 @@ export function useAppState() {
 
     const updateModelConfig = useCallback(async (config: Partial<ModelConfig>) => {
         try {
-            await api.updateSettings(config);
+            // Update local state
             setState(prev => ({
                 ...prev,
                 modelConfig: {
                     ...prev.modelConfig,
                     ...config
-                },
+                }
             }));
+
+            // Always save to backend
+            await api.updateSettings(config);
         } catch (error) {
             console.error('Failed to update model config:', error);
+            // Revert local state on error
+            setState(prev => ({
+                ...prev,
+                modelConfig: prev.modelConfig
+            }));
         }
     }, []);
 
     const updateProcessingConfig = useCallback(async (config: Partial<ProcessingConfig>) => {
         try {
-            await api.updateSettings(config);
+            // Update local state
             setState(prev => ({
                 ...prev,
                 processingConfig: {
@@ -90,8 +95,16 @@ export function useAppState() {
                     ...config
                 },
             }));
+
+            // Always save to backend - remove the condition
+            await api.updateSettings(config);
         } catch (error) {
             console.error('Failed to update processing config:', error);
+            // Add proper error handling if needed
+            setState(prev => ({
+                ...prev,
+                processingConfig: prev.processingConfig
+            }));
         }
     }, []);
 
@@ -216,8 +229,8 @@ export function useAppState() {
     }, []);
 
     const generateCaption = useCallback(async (image: File) => {
-        return api.generateCaption(image, state.examples);
-    }, [state.examples]);
+        return api.generateCaption(image);
+    }, []);
 
     return {
         state,

@@ -4,18 +4,19 @@ import {ExamplePair, ModelConfig, ProcessedItem, ProcessingConfig, PromptTemplat
 class ApiClient {
     private baseUrl: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
-    async generateCaption(image: File, examples: ExamplePair[]): Promise<string> {
+    async generateCaption(image: File): Promise<string> {
         const formData = new FormData();
         formData.append('image', image);
-        formData.append('examples', JSON.stringify(examples));
 
+        // We don't need to send the settings since the backend will use stored settings
         const response = await fetch(`${this.baseUrl}/generate-caption`, {
             method: 'POST',
             body: formData,
         });
 
         if (!response.ok) {
-            throw new Error('Failed to generate caption');
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to generate caption');
         }
 
         const data = await response.json();
@@ -137,6 +138,7 @@ class ApiClient {
 
     async getSettings(): Promise<ModelConfig & ProcessingConfig> {
         const response = await fetch(`${this.baseUrl}/settings`);
+        console.log('Settings response:', response); // Add logging
         if (!response.ok) {
             if (response.status === 404) {
                 // Return default settings if none exist
@@ -154,10 +156,13 @@ class ApiClient {
             }
             throw new Error('Failed to fetch settings');
         }
-        return response.json();
+        const data = await response.json();
+        console.log('Got settings:', data); // Add logging
+        return data;
     }
 
     async updateSettings(settings: Partial<ModelConfig & ProcessingConfig>): Promise<ModelConfig & ProcessingConfig> {
+        console.log('Updating settings with:', settings); // Add logging
         const response = await fetch(`${this.baseUrl}/settings`, {
             method: 'PUT',
             headers: {
@@ -169,7 +174,9 @@ class ApiClient {
         if (!response.ok) {
             throw new Error('Failed to update settings');
         }
-        return response.json();
+        const data = await response.json();
+        console.log('Update response:', data); // Add logging
+        return data;
     }
 }
 

@@ -62,7 +62,11 @@ const GeneratorView: React.FC<GeneratorViewProps> = ({
 
             {/* Right Panel: Preview (4 cols) */}
             <div className="col-span-4">
-                <PreviewPanel examples={examples}/>
+                <PreviewPanel
+                    examples={examples}
+                    activeTemplate={activeTemplate}
+                    testImage={undefined} // We'll add this later when implementing test image persistence
+                />
             </div>
         </div>
     );
