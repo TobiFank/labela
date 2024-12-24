@@ -42,6 +42,7 @@ class OpenAIProvider(BaseProvider):
                 for example in examples:
                     try:
                         # Get the actual file path from the URL
+                        logger.info(f"Processing example: {example.filename}")
                         image_path = example.image.replace('http://localhost:8000/api/examples/', '')
                         image_path = os.path.join('data/examples', image_path)
 
@@ -97,6 +98,9 @@ class OpenAIProvider(BaseProvider):
                     }
                 ]
             })
+
+            logger.debug(f"Config: {self.config}")
+            logger.debug(f"Messages: {messages}")
 
             logger.info("Making API call to OpenAI")
             response = await self.client.chat.completions.create(

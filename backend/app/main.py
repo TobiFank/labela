@@ -1,5 +1,4 @@
 # backend/app/main.py
-import logging
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Body
@@ -15,6 +14,13 @@ from .models import (
 )
 from .services import caption_service, settings_service
 
+import logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+
 init_db()
 app = FastAPI(title="Image Caption Generator API",
               root_path="/api")
@@ -29,23 +35,31 @@ app.add_middleware(
 )
 
 
-# backend/app/main.py
 @app.post("/generate-caption", response_model=CaptionResponse)
 async def generate_caption(
         image: UploadFile = File(...),
         examples: Optional[List[UploadFile]] = File(None)
 ):
     logger = logging.getLogger(__name__)
-    logger.info("Received caption generation request")
+    logger.info("=== Starting Caption Generation Request ===")
+
+    # Log image details
+    logger.info(f"Received image: {image.filename} ({image.content_type})")
+
+    # Log examples if provided
+    if examples:
+        logger.info(f"Received {len(examples)} example pairs:")
+        for idx, example in enumerate(examples):
+            logger.info(f"  Example {idx + 1}: {example.filename}")
 
     try:
-        # Get settings from database
-        logger.info("Fetching settings from database")
+        # Get settings and log them
         settings = settings_service.get_settings_service().get_settings()
-        if not settings:
-            logger.error("No settings configured")
-            raise HTTPException(status_code=400, detail="No settings configured")
-        logger.info("Successfully fetched settings")
+        logger.info("Using settings:")
+        logger.info(f"  Provider: {settings['provider']}")
+        logger.info(f"  Model: {settings['model']}")
+        logger.info(f"  Max tokens: {settings['max_tokens']}")
+        logger.info(f"  Temperature: {settings['temperature']}")
 
         # Create ModelConfig from settings
         model_config = ModelConfig(
@@ -56,15 +70,17 @@ async def generate_caption(
             max_tokens=settings['max_tokens'],
             temperature=settings['temperature']
         )
-        logger.info(f"Created ModelConfig with provider {model_config.provider} and model {model_config.model}")
 
         caption = await caption_service.get_caption_service().generate_single_caption(
             image_file=image,
             example_files=examples,
             model_config=model_config
         )
-        logger.info("Successfully generated caption")
+
+        logger.info(f"Generated caption: {caption}")
+        logger.info("=== Caption Generation Complete ===")
         return CaptionResponse(caption=caption)
+
     except Exception as e:
         logger.error(f"Error in generate_caption endpoint: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
