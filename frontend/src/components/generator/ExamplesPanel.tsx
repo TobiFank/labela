@@ -30,6 +30,15 @@ const ExamplesPanel: React.FC<ExamplesPanelProps> = ({
         }
     };
 
+    const getImageUrl = (imagePath: string) => {
+        // If the URL is already complete, return it
+        if (imagePath.startsWith('http')) {
+            return imagePath;
+        }
+        // Otherwise, prepend the base URL
+        return `http://localhost:8000${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    };
+
     return (
         <Card>
             <CardHeader>
@@ -50,7 +59,7 @@ const ExamplesPanel: React.FC<ExamplesPanelProps> = ({
                             <div className="flex items-start gap-3">
                                 <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0">
                                     <img
-                                        src={example.image}
+                                        src={getImageUrl(example.image)}
                                         alt={example.filename}
                                         className="w-full h-full object-cover rounded-lg"
                                     />

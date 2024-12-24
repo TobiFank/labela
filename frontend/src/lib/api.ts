@@ -134,10 +134,24 @@ class ApiClient {
         if (!response.ok) throw new Error('Failed to delete template');
     }
 
+    private ensureCompleteImageUrl(imageUrl: string): string {
+        if (imageUrl.startsWith('http')) {
+            return imageUrl;
+        }
+        const baseUrl = 'http://localhost:8000';
+        return `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+    }
+
+    // Modify getExamples to ensure complete image URLs
     async getExamples(): Promise<ExamplePair[]> {
         const response = await fetch(`${this.baseUrl}/examples`);
         if (!response.ok) throw new Error('Failed to fetch examples');
-        return response.json();
+        const examples = await response.json();
+        // Ensure all image URLs are complete
+        return examples.map((example: ExamplePair) => ({
+            ...example,
+            image: this.ensureCompleteImageUrl(example.image)
+        }));
     }
 
     async getSettings(): Promise<ModelConfig & ProcessingConfig> {
