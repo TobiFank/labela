@@ -38,21 +38,20 @@ export function useAppState() {
     });
 
     useEffect(() => {
-        // Load all initial data
         Promise.all([
             api.getPromptTemplates(),
             api.getExamples(),
             api.getSettings()
         ]).then(([templates, examples, settings]) => {
-            console.log('Loaded settings:', settings); // Add logging
+            console.log('Loaded settings:', settings);
             setState(prev => ({
                 ...prev,
                 templates,
                 activeTemplate: templates[0] || DEFAULT_PROMPT_TEMPLATE,
                 examples,
                 modelConfig: {
-                    ...DEFAULT_MODEL_CONFIG, // Keep default values as fallback
-                    ...settings, // Override with loaded settings
+                    ...DEFAULT_MODEL_CONFIG,
+                    ...settings,
                 },
                 processingConfig: {
                     ...DEFAULT_PROCESSING_CONFIG,
@@ -64,49 +63,35 @@ export function useAppState() {
 
     const updateModelConfig = useCallback(async (config: Partial<ModelConfig>) => {
         try {
-            // Update local state
+            const updatedConfig = {
+                ...state.modelConfig,
+                ...config
+            };
+            const updatedSettings = await api.updateSettings(updatedConfig);
             setState(prev => ({
                 ...prev,
-                modelConfig: {
-                    ...prev.modelConfig,
-                    ...config
-                }
+                modelConfig: updatedSettings
             }));
-
-            // Always save to backend
-            await api.updateSettings(config);
         } catch (error) {
             console.error('Failed to update model config:', error);
-            // Revert local state on error
-            setState(prev => ({
-                ...prev,
-                modelConfig: prev.modelConfig
-            }));
         }
-    }, []);
+    }, [state.modelConfig]);
 
     const updateProcessingConfig = useCallback(async (config: Partial<ProcessingConfig>) => {
         try {
-            // Update local state
+            const updatedConfig = {
+                ...state.processingConfig,
+                ...config
+            };
+            const updatedSettings = await api.updateSettings(updatedConfig);
             setState(prev => ({
                 ...prev,
-                processingConfig: {
-                    ...prev.processingConfig,
-                    ...config
-                },
+                processingConfig: updatedSettings
             }));
-
-            // Always save to backend - remove the condition
-            await api.updateSettings(config);
         } catch (error) {
             console.error('Failed to update processing config:', error);
-            // Add proper error handling if needed
-            setState(prev => ({
-                ...prev,
-                processingConfig: prev.processingConfig
-            }));
         }
-    }, []);
+    }, [state.processingConfig]);
 
     const createTemplate = useCallback(async (template: PromptTemplate) => {
         try {

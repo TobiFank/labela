@@ -41,6 +41,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         onClose();
     };
 
+    const handleModelConfigUpdate = (config: Partial<ModelConfig>) => {
+        setLocalModelConfig(prev => ({
+            ...prev,
+            ...config
+        }));
+    };
+
+    const handleProcessingConfigUpdate = (config: Partial<ProcessingConfig>) => {
+        setLocalProcessingConfig(prev => ({
+            ...prev,
+            ...config
+        }));
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -76,14 +90,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className="mb-6">
                         {activeTab === 'models' && (
                             <ModelSettings
-                                config={modelConfig}
-                                onUpdate={onUpdateModelConfig}
+                                config={localModelConfig}
+                                onUpdate={handleModelConfigUpdate}
                             />
                         )}
                         {activeTab === 'processing' && (
                             <ProcessingSettings
-                                config={processingConfig}
-                                onUpdate={onUpdateProcessingConfig}
+                                config={localProcessingConfig}
+                                onUpdate={handleProcessingConfigUpdate}
                             />
                         )}
                     </div>

@@ -138,10 +138,8 @@ class ApiClient {
 
     async getSettings(): Promise<ModelConfig & ProcessingConfig> {
         const response = await fetch(`${this.baseUrl}/settings`);
-        console.log('Settings response:', response); // Add logging
         if (!response.ok) {
             if (response.status === 404) {
-                // Return default settings if none exist
                 return {
                     provider: 'openai',
                     model: 'gpt-4-vision-preview',
@@ -157,26 +155,47 @@ class ApiClient {
             throw new Error('Failed to fetch settings');
         }
         const data = await response.json();
-        console.log('Got settings:', data); // Add logging
-        return data;
+
+        // Transform snake_case to camelCase
+        return {
+            provider: data.provider,
+            model: data.model,
+            apiKey: data.api_key,
+            costPerToken: data.cost_per_token,
+            maxTokens: data.max_tokens,
+            temperature: data.temperature,
+            batchSize: data.batch_size,
+            errorHandling: data.error_handling,
+            concurrentProcessing: data.concurrent_processing
+        };
     }
 
-    async updateSettings(settings: Partial<ModelConfig & ProcessingConfig>): Promise<ModelConfig & ProcessingConfig> {
-        console.log('Updating settings with:', settings); // Add logging
+    async updateSettings(settings: Partial<ModelConfig & ProcessingConfig>) {
+        // Transform camelCase to snake_case for backend
+        const backendSettings = {
+            provider: settings.provider,
+            model: settings.model,
+            api_key: settings.apiKey,
+            cost_per_token: settings.costPerToken,
+            max_tokens: settings.maxTokens,
+            temperature: settings.temperature,
+            batch_size: settings.batchSize,
+            error_handling: settings.errorHandling,
+            concurrent_processing: settings.concurrentProcessing
+        };
+
         const response = await fetch(`${this.baseUrl}/settings`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(settings),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(backendSettings),
         });
 
         if (!response.ok) {
             throw new Error('Failed to update settings');
         }
-        const data = await response.json();
-        console.log('Update response:', data); // Add logging
-        return data;
+
+        // Transform response back to camelCase
+        return this.getSettings();  // Reuse our transformation logic
     }
 }
 
