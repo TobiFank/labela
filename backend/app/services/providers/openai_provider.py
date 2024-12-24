@@ -131,7 +131,6 @@ class OpenAIProvider(BaseProvider):
             response = await self.client.chat.completions.create(
                 model=self.config.model,
                 messages=messages,
-                max_tokens=self.config.max_tokens,
                 temperature=self.config.temperature
             )
 

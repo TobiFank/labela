@@ -1,19 +1,54 @@
 // frontend/src/components/generator/TestPanel.tsx
-import React, {useState} from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Copy, Upload} from 'lucide-react';
-import {ModelConfig} from '@/lib/types';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Copy, Upload } from 'lucide-react';
+import { ModelConfig, ExamplePair, PromptTemplate } from '@/lib/types';
+import {countTokens, calculateCost, getImageDimensions, getImageTokenCount} from '@/lib/utils/tokenCounter';
 
 interface TestPanelProps {
     onGenerateCaption: (image: File) => Promise<string>;
     modelConfig: ModelConfig;
+    examples: ExamplePair[];
+    activeTemplate: PromptTemplate;
 }
 
-const TestPanel: React.FC<TestPanelProps> = ({onGenerateCaption, modelConfig}) => {
+const TestPanel: React.FC<TestPanelProps> = ({
+                                                 onGenerateCaption,
+                                                 modelConfig,
+                                                 examples = [], // Provide default empty array
+                                                 activeTemplate
+                                             }) => {
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [generatedCaption, setGeneratedCaption] = useState<string>('');
     const [isGenerating, setIsGenerating] = useState(false);
+    const [tokenCount, setTokenCount] = useState(countTokens(activeTemplate, examples));
+
+    const [selectedImageTokens, setSelectedImageTokens] = useState(0);
+
+    useEffect(() => {
+        async function updateImageTokens() {
+            if (selectedImage) {
+                const dimensions = await getImageDimensions(selectedImage);
+                const tokens = getImageTokenCount(dimensions.width, dimensions.height);
+                setSelectedImageTokens(tokens);
+            } else {
+                setSelectedImageTokens(0);
+            }
+        }
+        updateImageTokens();
+    }, [selectedImage]);
+
+    const adjustedTokenCount = {
+        ...tokenCount,
+        imageTokens: tokenCount.imageTokens + selectedImageTokens,
+        totalTokens: tokenCount.totalTokens + selectedImageTokens
+    };
+
+    // Update token count when examples or template changes
+    useEffect(() => {
+        setTokenCount(countTokens(activeTemplate, examples));
+    }, [examples, activeTemplate]);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -43,6 +78,8 @@ const TestPanel: React.FC<TestPanelProps> = ({onGenerateCaption, modelConfig}) =
     const handleCopy = () => {
         navigator.clipboard.writeText(generatedCaption);
     };
+
+    const estimatedCost = calculateCost(tokenCount, modelConfig.costPerToken);
 
     return (
         <>
@@ -118,16 +155,23 @@ const TestPanel: React.FC<TestPanelProps> = ({onGenerateCaption, modelConfig}) =
                     <div className="grid grid-cols-3 gap-3 text-sm">
                         <div className="p-2 bg-gray-50 rounded-lg text-center">
                             <p className="text-gray-600">Examples</p>
-                            <p className="font-medium">3</p>
+                            <p className="font-medium">{examples.length}</p>
                         </div>
                         <div className="p-2 bg-gray-50 rounded-lg text-center">
-                            <p className="text-gray-600">Tokens</p>
-                            <p className="font-medium">1,234</p>
+                            <p className="text-gray-600">Total Tokens</p>
+                            <p className="font-medium">{adjustedTokenCount.totalTokens.toLocaleString()}</p>
+                            <div className="text-xs text-gray-500 mt-1">
+                                <div>System: {adjustedTokenCount.systemPromptTokens}</div>
+                                <div>Template: {adjustedTokenCount.templateTokens}</div>
+                                <div>Examples: {adjustedTokenCount.exampleTokens}</div>
+                                <div>Images: {adjustedTokenCount.imageTokens}</div>
+                            </div>
                         </div>
                         <div className="p-2 bg-gray-50 rounded-lg text-center">
                             <p className="text-gray-600">Cost</p>
-                            <p className="font-medium">
-                                ${((modelConfig.costPerToken * modelConfig.maxTokens) / 1000).toFixed(4)}
+                            <p className="font-medium">${estimatedCost.toFixed(4)}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                                ${modelConfig.costPerToken.toFixed(4)}/1K tokens
                             </p>
                         </div>
                     </div>

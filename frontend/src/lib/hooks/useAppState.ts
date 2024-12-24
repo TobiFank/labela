@@ -8,7 +8,6 @@ const DEFAULT_MODEL_CONFIG: ModelConfig = {
     model: 'gpt-4o',
     apiKey: '',
     costPerToken: 0.01,
-    maxTokens: 1000,
     temperature: 0.5,
 };
 

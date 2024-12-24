@@ -19,7 +19,6 @@ class ModelConfig(BaseModelWithConfig):
     model: str
     api_key: str
     cost_per_token: float
-    max_tokens: int
     temperature: float
 
 
@@ -81,7 +80,6 @@ class SettingsUpdate(BaseModelWithConfig):
     model: Optional[str] = None
     api_key: Optional[str] = None
     cost_per_token: Optional[float] = None
-    max_tokens: Optional[int] = None
     temperature: Optional[float] = None
     batch_size: Optional[int] = None
     error_handling: Optional[Literal["continue", "stop"]] = None
@@ -116,7 +114,6 @@ class DBSettings(Base):
     model = Column(String, nullable=False)
     api_key = Column(String, nullable=True)
     cost_per_token = Column(Float, nullable=False)
-    max_tokens = Column(Integer, nullable=False)
     temperature = Column(Float, nullable=False)
     batch_size = Column(Integer, nullable=False, default=50)
     error_handling = Column(String, nullable=False, default="continue")
@@ -131,7 +128,6 @@ class DBSettings(Base):
             "model": self.model,
             "api_key": self.api_key,
             "cost_per_token": self.cost_per_token,
-            "max_tokens": self.max_tokens,
             "temperature": self.temperature,
             "batch_size": self.batch_size,
             "error_handling": self.error_handling,

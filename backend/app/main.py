@@ -51,7 +51,6 @@ async def generate_caption(
         logger.info("Using settings:")
         logger.info(f"  Provider: {settings['provider']}")
         logger.info(f"  Model: {settings['model']}")
-        logger.info(f"  Max tokens: {settings['max_tokens']}")
         logger.info(f"  Temperature: {settings['temperature']}")
 
         # Create ModelConfig from settings
@@ -60,7 +59,6 @@ async def generate_caption(
             model=settings['model'],
             api_key=settings['api_key'],
             cost_per_token=settings['cost_per_token'],
-            max_tokens=settings['max_tokens'],
             temperature=settings['temperature']
         )
 
@@ -208,8 +206,7 @@ async def get_settings():
                 "model": "gpt-4o",
                 "api_key": "",
                 "cost_per_token": 0.01,
-                "max_tokens": 1000,
-                "temperature": 0.7,
+                "temperature": 0.5,
                 "batch_size": 50,
                 "error_handling": "continue",
                 "concurrent_processing": 2

@@ -40,7 +40,6 @@ class SettingsService:
                 model=settings_update.model or "gpt-4o",
                 api_key=settings_update.api_key or "",
                 cost_per_token=settings_update.cost_per_token or 0.01,
-                max_tokens=settings_update.max_tokens or 1000,
                 temperature=settings_update.temperature or 0.5,
                 batch_size=settings_update.batch_size or 50,
                 error_handling=settings_update.error_handling or "continue",
@@ -55,7 +54,6 @@ class SettingsService:
             settings.model = settings_update.model or settings.model
             settings.api_key = settings_update.api_key if settings_update.api_key is not None else settings.api_key
             settings.cost_per_token = settings_update.cost_per_token if settings_update.cost_per_token is not None else settings.cost_per_token
-            settings.max_tokens = settings_update.max_tokens if settings_update.max_tokens is not None else settings.max_tokens
             settings.temperature = settings_update.temperature if settings_update.temperature is not None else settings.temperature
             settings.batch_size = settings_update.batch_size if settings_update.batch_size is not None else settings.batch_size
             settings.error_handling = settings_update.error_handling if settings_update.error_handling is not None else settings.error_handling

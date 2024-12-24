@@ -1,11 +1,12 @@
 // frontend/src/components/settings/tabs/ModelSettings.tsx
+// frontend/src/components/settings/tabs/ModelSettings.tsx
 import React from 'react';
-import {ModelConfig} from '@/lib/types';
-import {Input} from "@/components/ui/input";
-import {Label} from "@/components/ui/label";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {Card, CardContent} from "@/components/ui/card";
-import {Slider} from "@/components/ui/slider";
+import { ModelConfig } from '@/lib/types';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
 
 interface ModelSettingsProps {
     config: ModelConfig;
@@ -23,6 +24,12 @@ const ModelSettings: React.FC<ModelSettingsProps> = ({
         });
     };
 
+    // Calculate example cost for a typical request
+    const calculateExampleCost = () => {
+        const typicalTokens = 1000; // Example: system prompt + template + 2 examples + images
+        return (config.costPerToken * typicalTokens / 1000).toFixed(4);
+    };
+
     return (
         <div className="space-y-6">
             {/* Provider Selection */}
@@ -33,10 +40,11 @@ const ModelSettings: React.FC<ModelSettingsProps> = ({
                     onValueChange={(value) => handleChange('provider', value)}
                 >
                     <SelectTrigger>
-                        <SelectValue placeholder="Select provider"/>
+                        <SelectValue placeholder="Select provider" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="openai">OpenAI</SelectItem>
+                        <SelectItem value="huggingface">HuggingFace</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -49,13 +57,11 @@ const ModelSettings: React.FC<ModelSettingsProps> = ({
                     onValueChange={(value) => handleChange('model', value)}
                 >
                     <SelectTrigger>
-                        <SelectValue placeholder="Select model"/>
+                        <SelectValue placeholder="Select model" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                        <SelectItem value="gpt-4o-mini">GPT-4o mini</SelectItem>
-                        <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                        <SelectItem value="gpt-4v">GPT-4 Vision</SelectItem>
+                        <SelectItem value="gpt-4-vision-preview">GPT-4 Vision</SelectItem>
+                        <SelectItem value="gpt-4">GPT-4</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -71,34 +77,26 @@ const ModelSettings: React.FC<ModelSettingsProps> = ({
                     className="font-mono"
                 />
                 <p className="text-xs text-gray-500">
-                    Your API key is stored securely in your browser
+                    Your API key is stored securely
                 </p>
             </div>
 
-            {/* Cost Settings */}
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label>Cost per 1K tokens ($)</Label>
-                    <Input
-                        type="number"
-                        value={config.costPerToken}
-                        onChange={(e) => handleChange('costPerToken', parseFloat(e.target.value))}
-                        step="0.001"
-                        min="0"
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label>Max tokens</Label>
-                    <Input
-                        type="number"
-                        value={config.maxTokens}
-                        onChange={(e) => handleChange('maxTokens', parseInt(e.target.value))}
-                        min="1"
-                    />
-                </div>
+            {/* Cost per token */}
+            <div className="space-y-2">
+                <Label>Cost per 1K tokens ($)</Label>
+                <Input
+                    type="number"
+                    value={config.costPerToken}
+                    onChange={(e) => handleChange('costPerToken', parseFloat(e.target.value))}
+                    step="0.001"
+                    min="0"
+                />
+                <p className="text-xs text-gray-500">
+                    Cost per 1,000 tokens for the selected model
+                </p>
             </div>
 
-            {/* Add Temperature Control */}
+            {/* Temperature Control */}
             <div className="space-y-2">
                 <Label>Temperature</Label>
                 <div className="flex items-center gap-4">
@@ -122,16 +120,15 @@ const ModelSettings: React.FC<ModelSettingsProps> = ({
             {/* Cost Preview */}
             <Card>
                 <CardContent className="p-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
                         <div className="text-sm">
-                            <p className="text-gray-600">Estimated cost per image</p>
+                            <p className="text-gray-600">Example cost calculation</p>
                             <p className="font-medium">
-                                ${(config.costPerToken * config.maxTokens / 1000).toFixed(4)}
+                                Typical request (~1000 tokens): ${calculateExampleCost()}
                             </p>
-                        </div>
-                        <div className="text-sm">
-                            <p className="text-gray-600">Selected Model</p>
-                            <p className="font-medium">{config.model}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Includes system prompt, template, examples, and images
+                            </p>
                         </div>
                     </div>
                 </CardContent>
