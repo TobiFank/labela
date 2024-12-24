@@ -134,3 +134,14 @@ class DBSettings(Base):
             "concurrent_processing": self.concurrent_processing
         }
 
+class DBProcessedItem(Base):
+    __tablename__ = "processed_items"
+
+    id = Column(String, primary_key=True)
+    filename = Column(String, nullable=False)
+    image_path = Column(String, nullable=False)
+    caption = Column(String, nullable=False)
+    status = Column(String, nullable=False)  # 'pending', 'processing', 'completed', 'error'
+    error_message = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    batch_id = Column(String, nullable=False)

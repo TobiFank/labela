@@ -62,6 +62,8 @@ const ModelSettings: React.FC<ModelSettingsProps> = ({
                     <SelectContent>
                         <SelectItem value="gpt-4-vision-preview">GPT-4 Vision</SelectItem>
                         <SelectItem value="gpt-4">GPT-4</SelectItem>
+                        <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                        <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
                     </SelectContent>
                 </Select>
             </div>

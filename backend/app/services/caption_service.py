@@ -39,6 +39,7 @@ class CaptionService:
         self._templates: List[PromptTemplate] = []
         self._db: Session = SessionLocal()
         self._examples = []
+        self._paused = False
 
     def initialize(self):
         self._examples = self.load_examples()
