@@ -1,7 +1,7 @@
 // frontend/src/components/generator/PreviewPanel.tsx
 import React from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {ExamplePair, PromptTemplate} from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExamplePair, PromptTemplate } from '@/lib/types';
 
 interface PreviewPanelProps {
     examples: ExamplePair[];
@@ -12,18 +12,72 @@ interface PreviewPanelProps {
 const PreviewPanel: React.FC<PreviewPanelProps> = ({
                                                        examples,
                                                        activeTemplate,
-                                                       testImage
                                                    }) => {
-    const formatExampleText = (example: ExamplePair) => {
-        return `[Image: ${example.filename}]\nCaption: ${example.caption}`;
+    const formatMessage = (role: string, content: string | object) => {
+        return `{
+  "role": "${role}",
+  "content": ${JSON.stringify(content, null, 2)}
+}`;
     };
 
     const getPromptPreview = () => {
-        const exampleText = examples
-            .map((ex, index) => `\n\n# Example ${index + 1}\n${formatExampleText(ex)}`)
-            .join('');
+        const messages = [];
 
-        return `# Template\n${activeTemplate.content}${exampleText}\n\n# New Image\n[Image: ${testImage?.name || 'No image selected'}]\nGenerate caption:`;
+        // Add examples with template for the first one
+        examples.forEach((example, index) => {
+            // For the first example, include the template
+            if (index === 0) {
+                messages.push(formatMessage("user", [
+                    { type: "text", text: activeTemplate.content },
+                    {
+                        type: "image_url",
+                        image_url: {
+                            url: "[Base64 Image Content of example image]"
+                        }
+                    }
+                ]));
+            } else {
+                // For subsequent examples, just the image
+                messages.push(formatMessage("user", [
+                    {
+                        type: "image_url",
+                        image_url: {
+                            url: "[Base64 Image Content of example image]"
+                        }
+                    }
+                ]));
+            }
+
+            // Assistant's response for each example
+            messages.push(formatMessage("assistant", example.caption));
+        });
+
+        // Add the target image message
+        const targetImageMessage = examples.length === 0 && activeTemplate.content
+            ? [
+                { type: "text", text: activeTemplate.content },
+                {
+                    type: "image_url",
+                    image_url: {
+                        url: "[Base64 Image Content of the target image]"
+                    }
+                }
+            ]
+            : [
+                {
+                    type: "image_url",
+                    image_url: {
+                        url: "[Base64 Image Content of the target image]"
+                    }
+                }
+            ];
+
+        messages.push(formatMessage("user", targetImageMessage));
+
+        return `// OpenAI Chat Completion Messages Array
+[
+${messages.join(',\n')}
+]`;
     };
 
     return (
@@ -33,7 +87,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({
             </CardHeader>
             <CardContent>
                 <div className="bg-gray-900 rounded-lg p-4 text-sm font-mono">
-                    <pre className="text-green-400 whitespace-pre-wrap">
+                    <pre className="text-green-400 whitespace-pre-wrap overflow-auto max-h-[calc(100vh-12rem)]">
                         {getPromptPreview()}
                     </pre>
                 </div>
