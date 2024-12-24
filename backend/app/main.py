@@ -1,5 +1,6 @@
 # backend/app/main.py
 import logging
+import os
 from typing import List
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Body
@@ -19,6 +20,30 @@ logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+
+logger = logging.getLogger(__name__)
+
+
+def setup_data_directories():
+    """Ensure data directories exist with proper permissions"""
+    directories = [
+        "data",
+        "data/examples",
+        "backend/data",
+        "backend/data/temp"
+    ]
+
+    for directory in directories:
+        try:
+            os.makedirs(directory, mode=0o777, exist_ok=True)
+            os.chmod(directory, 0o777)  # Ensure directory is world-writable
+            logger.info(f"Ensured {directory} exists with proper permissions")
+        except Exception as e:
+            logger.error(f"Failed to setup {directory}: {str(e)}")
+            # Don't raise here, just log the error
+
+
+setup_data_directories()
 
 init_db()
 app = FastAPI(title="Image Caption Generator API",
@@ -252,6 +277,43 @@ async def resume_batch_processing():
         return {"message": "Batch processing resumed"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/folder-contents")
+async def get_folder_contents(folder_path: str):
+    """Get contents of a folder including caption status of images"""
+    try:
+        contents = await caption_service.get_caption_service().get_folder_contents(folder_path)
+        return contents
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/folders")
+async def list_folders():
+    """List all available folders in the data directory"""
+    # Important: Use absolute path from project root
+    base_dir = "./data"  # This points to the root data folder
+    folders = []
+
+    for item in os.listdir(base_dir):
+        if item == "examples":  # Skip examples folder
+            continue
+
+        full_path = os.path.join(base_dir, item)
+        if os.path.isdir(full_path):
+            image_count = len([
+                f for f in os.listdir(full_path)
+                if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
+            ])
+
+            folders.append({
+                'name': item,
+                'path': full_path,
+                'image_count': image_count
+            })
+
+    return folders
 
 
 caption_service.initialize_service()

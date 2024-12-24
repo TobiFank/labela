@@ -164,33 +164,76 @@ class CaptionService:
             self._process_batch(folder_path, model_config, processing_config or ProcessingConfig())
         )
 
+    async def get_folder_contents(self, folder_path: str) -> dict:
+        """Get contents of a folder with caption status"""
+        try:
+            # Get all image files
+            image_files = [
+                f for f in os.listdir(folder_path)
+                if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
+            ]
+
+            folder_stats = {
+                'total_images': len(image_files),
+                'captioned': 0,
+                'uncaptioned': 0,
+                'files': []
+            }
+
+            # Check each file's caption status
+            for image_file in image_files:
+                image_path = os.path.join(folder_path, image_file)
+                caption_path = os.path.splitext(image_path)[0] + '.txt'
+
+                caption_content = None
+                if os.path.exists(caption_path):
+                    with open(caption_path, 'r') as f:
+                        caption_content = f.read().strip()
+                    folder_stats['captioned'] += 1
+                else:
+                    folder_stats['uncaptioned'] += 1
+
+                folder_stats['files'].append({
+                    'filename': image_file,
+                    'has_caption': caption_content is not None,
+                    'caption': caption_content,
+                    'last_modified': os.path.getmtime(image_path)
+                })
+
+            return folder_stats
+
+        except Exception as e:
+            logger.error(f"Error reading folder contents: {str(e)}")
+            raise
+
     async def _process_batch(self, folder_path: str, model_config: ModelConfig, processing_config: ProcessingConfig):
         try:
             provider = self._providers[model_config.provider]
             provider.configure(model_config)
 
-            # Get list of all image files (keep existing code)
+            # Get list of image files that don't have captions yet
             image_files = [
                 f for f in os.listdir(folder_path)
                 if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
+                and not os.path.exists(os.path.splitext(os.path.join(folder_path, f))[0] + '.txt')
             ]
+
             total_images = len(image_files)
+            logger.info(f"Found {total_images} images without captions")
 
             # Process in batches
             for i in range(0, total_images, processing_config.batch_size):
                 if not self._processing:
                     break
 
-                # Add pause check
                 while self._paused:
                     await asyncio.sleep(1)
-                    if not self._processing:  # Allow stopping while paused
+                    if not self._processing:
                         break
 
                 batch = image_files[i:i + processing_config.batch_size]
                 self._current_batch += 1
 
-                # Rest of the existing batch processing code
                 tasks = []
                 for filename in batch:
                     filepath = os.path.join(folder_path, filename)
@@ -203,17 +246,23 @@ class CaptionService:
                     except Exception as e:
                         if processing_config.error_handling == "stop":
                             raise
-                        # Log error and continue
+                        logger.error(f"Error processing file: {str(e)}")
 
         except Exception as e:
-            print(f"Batch processing error: {str(e)}")
+            logger.error(f"Batch processing error: {str(e)}")
         finally:
             self._processing = False
 
     async def _process_single_image(self, image_path: str, provider) -> ProcessedItem:
         try:
+            # Generate caption
             image = Image.open(image_path)
             caption = await provider.generate_caption(image)
+
+            # Save caption to a txt file next to the image
+            caption_path = os.path.splitext(image_path)[0] + '.txt'
+            async with aiofiles.open(caption_path, 'w') as f:
+                await f.write(caption)
 
             return ProcessedItem(
                 id=len(self._processed_items) + 1,
@@ -224,6 +273,7 @@ class CaptionService:
                 status="success"
             )
         except Exception as e:
+            logger.error(f"Error processing {image_path}: {str(e)}")
             return ProcessedItem(
                 id=len(self._processed_items) + 1,
                 filename=os.path.basename(image_path),

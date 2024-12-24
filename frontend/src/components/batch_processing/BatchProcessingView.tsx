@@ -1,6 +1,6 @@
 // frontend/src/components/batch_processing/BatchProcessingView.tsx
 import React, {useState} from 'react';
-import {ModelConfig, ProcessedItem} from '@/lib/types';
+import {ModelConfig, ProcessedItem, ProcessingConfig} from '@/lib/types';
 import StatusSection from './StatusSection';
 import LiveFeed from './LiveFeed';
 import ProcessedGallery from './ProcessedGallery';
@@ -16,6 +16,7 @@ interface BatchProcessingViewProps {
     onPauseProcessing: () => Promise<void>;
     onResumeProcessing: () => Promise<void>;
     modelConfig: ModelConfig;
+    processingConfig: ProcessingConfig;
 }
 
 const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({

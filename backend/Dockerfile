@@ -32,7 +32,8 @@ RUN poetry config virtualenvs.create false \
 COPY . .
 
 # Create directories for data persistence
-RUN mkdir -p /app/data/examples /app/data/input /app/data/output
+RUN mkdir -p /app/data/temp && \
+    chmod -R 777 /app/data/temp
 
 # Expose port 8000
 EXPOSE 8000

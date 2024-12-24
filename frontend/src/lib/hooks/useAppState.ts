@@ -1,5 +1,5 @@
 // frontend/src/lib/hooks/useAppState.ts
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {AppState, ModelConfig, ProcessingConfig, PromptTemplate} from '../types';
 import {api} from '../api';
 
@@ -230,35 +230,65 @@ export function useAppState() {
         }
     }, []);
 
+    // Store the interval ID in a ref so we can clean it up later
+    const pollingIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+    // Cleanup effect for the polling interval
+    useEffect(() => {
+        return () => {
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+            }
+        };
+    }, []);
+
     const startProcessing = useCallback(async (folder: string) => {
         setState(prev => ({...prev, isProcessing: true, isPaused: false}));
-        await api.startBatchProcessing(folder);
+        await api.startBatchProcessing(
+            folder,
+            state.modelConfig,
+            state.processingConfig
+        );
 
-        let intervalId: NodeJS.Timeout;
         const startPolling = () => {
-            intervalId = setInterval(async () => {
-                const status = await api.getProcessingStatus();
-                setState(prev => {
-                    if (!prev.isProcessing) {
-                        clearInterval(intervalId);
-                        return prev;
-                    }
-                    return {
-                        ...prev,
-                        processedItems: status.processedItems,
-                        isProcessing: status.status !== 'completed',
-                    };
-                });
+            // Clear any existing interval
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+            }
 
-                if (status.status === 'completed') {
-                    clearInterval(intervalId);
+            pollingIntervalRef.current = setInterval(async () => {
+                try {
+                    const status = await api.getProcessingStatus();
+                    setState(prev => {
+                        if (!prev.isProcessing) {
+                            if (pollingIntervalRef.current) {
+                                clearInterval(pollingIntervalRef.current);
+                            }
+                            return prev;
+                        }
+                        return {
+                            ...prev,
+                            processedItems: status.processedItems,
+                            isProcessing: status.status !== 'completed',
+                        };
+                    });
+
+                    if (status.status === 'completed') {
+                        if (pollingIntervalRef.current) {
+                            clearInterval(pollingIntervalRef.current);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error polling status:', error);
+                    if (pollingIntervalRef.current) {
+                        clearInterval(pollingIntervalRef.current);
+                    }
                 }
             }, 1000);
         };
-        startPolling();
 
-        return () => clearInterval(intervalId); // Cleanup function
-    }, []);
+        startPolling();
+    }, [state.modelConfig, state.processingConfig]);
 
     const stopProcessing = useCallback(async () => {
         await api.stopBatchProcessing();

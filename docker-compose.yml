@@ -10,9 +10,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - ./data/examples:/app/data/examples
-      - ./data/input:/app/data/input
-      - ./data/output:/app/data/output
+      - ./data:/app/data:rw
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:8000
@@ -27,9 +25,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
-      - ./data/examples:/app/data/examples
-      - ./data/input:/app/data/input
-      - ./data/output:/app/data/output
+      - ./data:/app/data:rw
       - huggingface_cache:/root/.cache/huggingface
     environment:
       - ENVIRONMENT=development

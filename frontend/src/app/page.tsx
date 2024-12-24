@@ -61,6 +61,7 @@ const AppPage = () => {
                     onPauseProcessing={pauseProcessing}
                     onResumeProcessing={resumeProcessing}
                     modelConfig={state.modelConfig}
+                    processingConfig={state.processingConfig}
                 />
             )}
 

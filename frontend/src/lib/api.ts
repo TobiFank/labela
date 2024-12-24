@@ -238,6 +238,14 @@ class ApiClient {
             throw new Error('Failed to resume batch processing');
         }
     }
+
+    async getFolders() {
+        const response = await fetch(`${this.baseUrl}/folders`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch folders');
+        }
+        return response.json();
+    }
 }
 
 export const api = new ApiClient();
