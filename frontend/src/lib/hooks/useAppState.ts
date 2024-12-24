@@ -21,7 +21,7 @@ const DEFAULT_PROCESSING_CONFIG: ProcessingConfig = {
 const DEFAULT_PROMPT_TEMPLATE: PromptTemplate = {
     id: 'default',
     name: 'Default Template',
-    content: 'Generate a caption for the image following these guidelines...',
+    content: 'I want you to create captions for the provided images. Focusing ONLY on what you can directly observe in the image. Follow these strict guidelines:\\n\\n1. Describe the building, its location, and visible surroundings using ONLY factual, objective terms.\\n2. State the weather conditions visible in the image without interpretation.\\n3. Describe any visible street-level activity or urban elements factually.\\n4. If present, describe the geometric facade of the building in detail, focusing on its observable features.\\n5. DO NOT use subjective or interpretive language like \\"striking,\\" \\"beautiful,\\" \\"serene,\\" or \\"inviting.\\"\\n6. DO NOT make assumptions about atmosphere, feelings, or anything not directly visible in the image.\\n7. DO NOT use flowery or poetic language. Stick to clear, factual descriptions.\\n8. Focus solely on what is visible - do not invent or imagine elements not shown in the image. Caption the new image using ONLY objective, factual descriptions of what you can directly observe. Do not use any subjective or interpretive language. Describe the image as if you are a camera, not a poet or storyteller.',
     isDefault: true,
 };
 
