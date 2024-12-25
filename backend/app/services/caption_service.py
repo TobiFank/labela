@@ -41,7 +41,7 @@ class CaptionService:
         self._examples = []
         self._paused = False
         self._examples_dir = "/data/examples"  # Root data/examples directory
-        self._temp_dir = "/app/backend/temp"   # Backend temp directory
+        self._temp_dir = "/app/backend/temp"  # Backend temp directory
         self._current_folder = None
 
     def initialize(self):
@@ -211,6 +211,7 @@ class CaptionService:
             raise
 
     async def _process_batch(self, folder_path: str, model_config: ModelConfig, processing_config: ProcessingConfig):
+        """Process a batch of images with concurrent processing limits"""
         try:
             provider = self._providers[model_config.provider]
             provider.configure(model_config)
@@ -219,7 +220,7 @@ class CaptionService:
             image_files = [
                 f for f in os.listdir(folder_path)
                 if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
-                and not os.path.exists(os.path.splitext(os.path.join(folder_path, f))[0] + '.txt')
+                   and not os.path.exists(os.path.splitext(os.path.join(folder_path, f))[0] + '.txt')
             ]
 
             total_images = len(image_files)
@@ -238,24 +239,46 @@ class CaptionService:
                 batch = image_files[i:i + processing_config.batch_size]
                 self._current_batch += 1
 
-                tasks = []
+                # Process batch with concurrency control
+                running_tasks = set()
+                completed_tasks = []
+
                 for filename in batch:
                     filepath = os.path.join(folder_path, filename)
-                    tasks.append(self._process_single_image(filepath, provider))
 
-                for batch_result in asyncio.as_completed(tasks, limit=processing_config.concurrent_processing):
+                    # Wait if we've hit the concurrency limit
+                    if len(running_tasks) >= processing_config.concurrent_processing:
+                        done, running_tasks = await asyncio.wait(
+                            running_tasks,
+                            return_when=asyncio.FIRST_COMPLETED
+                        )
+                        completed_tasks.extend(done)
+
+                    # Create and add new task
+                    task = asyncio.create_task(self._process_single_image(filepath, provider))
+                    running_tasks.add(task)
+
+                # Wait for any remaining tasks in this batch
+                if running_tasks:
+                    done, _ = await asyncio.wait(running_tasks)
+                    completed_tasks.extend(done)
+
+                # Process all completed tasks
+                for task in completed_tasks:
                     try:
-                        processed_item = await batch_result
+                        processed_item = await task
                         self._processed_items.append(processed_item)
                     except Exception as e:
+                        logger.error(f"Error processing file: {str(e)}")
                         if processing_config.error_handling == "stop":
                             raise
-                        logger.error(f"Error processing file: {str(e)}")
 
         except Exception as e:
             logger.error(f"Batch processing error: {str(e)}")
+            raise  # Re-raise to ensure error is properly handled
         finally:
             self._processing = False
+            logger.info("Batch processing completed")
 
     async def _process_single_image(self, image_path: str, provider) -> ProcessedItem:
         try:
