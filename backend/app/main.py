@@ -324,7 +324,7 @@ async def list_folders():
 
 caption_service.initialize_service()
 
-app.mount("/examples", StaticFiles(directory="/data/examples"), name="examples")
+app.mount("/data", StaticFiles(directory="/data"), name="data")
 
 if __name__ == "__main__":
     import uvicorn
