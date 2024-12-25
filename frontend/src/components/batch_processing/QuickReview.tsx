@@ -2,6 +2,7 @@
 import React, {useState} from 'react';
 import {Check, ChevronLeft, ChevronRight, Edit, Flag} from 'lucide-react';
 import {ProcessedItem} from '@/lib/types';
+import {api} from '@/lib/api';
 
 interface QuickReviewProps {
     items: ProcessedItem[];
@@ -12,11 +13,13 @@ const QuickReview: React.FC<QuickReviewProps> = ({items, onClose}) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [editMode, setEditMode] = useState(false);
     const [editedCaption, setEditedCaption] = useState(items[0]?.caption || '');
+    const [isSaving, setIsSaving] = useState(false);
+    const [updatedItems, setUpdatedItems] = useState<ProcessedItem[]>(items);
 
     const handlePrevious = () => {
         if (currentIndex > 0) {
             setCurrentIndex(currentIndex - 1);
-            setEditedCaption(items[currentIndex - 1].caption);
+            setEditedCaption(updatedItems[currentIndex - 1].caption);
             setEditMode(false);
         }
     };
@@ -24,30 +27,46 @@ const QuickReview: React.FC<QuickReviewProps> = ({items, onClose}) => {
     const handleNext = () => {
         if (currentIndex < items.length - 1) {
             setCurrentIndex(currentIndex + 1);
-            setEditedCaption(items[currentIndex + 1].caption);
+            setEditedCaption(updatedItems[currentIndex + 1].caption);
             setEditMode(false);
         }
     };
 
-    const handleApproveAndNext = () => {
-        // In a real app, you'd save any changes here
-        if (editMode && editedCaption !== items[currentIndex].caption) {
-            // Save the edited caption
-            console.log('Saving edited caption:', editedCaption);
+    const handleApproveAndNext = async () => {
+        if (editMode && editedCaption !== updatedItems[currentIndex].caption) {
+            setIsSaving(true);
+            try {
+                // Save the edited caption using the API
+                const updatedItem = await api.updateProcessedItemCaption(
+                    updatedItems[currentIndex].id,
+                    editedCaption
+                );
+
+                // Update the local state with the new caption
+                setUpdatedItems(items.map(item =>
+                    item.id === updatedItem.id ? updatedItem : item
+                ));
+
+            } catch (error) {
+                console.error('Failed to save caption:', error);
+                // Optionally show an error message to the user
+                alert('Failed to save caption changes. Please try again.');
+                return;
+            } finally {
+                setIsSaving(false);
+            }
         }
         handleNext();
     };
 
     const getImageUrl = (imagePath: string) => {
-        // If the URL is already complete, return it
         if (imagePath.startsWith('http')) {
             return imagePath;
         }
-        // Otherwise, prepend the base URL
         return `http://localhost:8000/api${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     };
 
-    const currentItem = items[currentIndex];
+    const currentItem = updatedItems[currentIndex];
 
     if (!currentItem) return null;
 
@@ -106,24 +125,24 @@ const QuickReview: React.FC<QuickReviewProps> = ({items, onClose}) => {
                     <button
                         className="p-2 hover:bg-gray-100 rounded-lg"
                         onClick={handlePrevious}
-                        disabled={currentIndex === 0}
+                        disabled={currentIndex === 0 || isSaving}
                     >
                         <ChevronLeft className="w-5 h-5"/>
                     </button>
 
                     <button
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 disabled:bg-green-300"
                         onClick={handleApproveAndNext}
-                        disabled={currentIndex === items.length - 1}
+                        disabled={currentIndex === items.length - 1 || isSaving}
                     >
                         <Check className="w-4 h-4"/>
-                        Approve & Next
+                        {isSaving ? 'Saving...' : 'Approve & Next'}
                     </button>
 
                     <button
                         className="p-2 hover:bg-gray-100 rounded-lg"
                         onClick={handleNext}
-                        disabled={currentIndex === items.length - 1}
+                        disabled={currentIndex === items.length - 1 || isSaving}
                     >
                         <ChevronRight className="w-5 h-5"/>
                     </button>

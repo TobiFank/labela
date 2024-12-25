@@ -1,11 +1,12 @@
 // frontend/src/components/batch_processing/BatchProcessingView.tsx
-import React, {useState} from 'react';
-import {ExamplePair, ModelConfig, ProcessedItem, ProcessingConfig, PromptTemplate} from '@/lib/types';
-import StatusSection from './StatusSection';
+import React, { useState, useEffect } from 'react';
+import { ExamplePair, ModelConfig, ProcessedItem, ProcessingConfig, PromptTemplate } from '@/lib/types';
+import StatusSection, {FolderStats} from './StatusSection';
 import LiveFeed from './LiveFeed';
 import ProcessedGallery from './ProcessedGallery';
 import FolderSelect from './FolderSelect';
 import QuickReview from './QuickReview';
+import { api } from '@/lib/api';
 
 interface BatchProcessingViewProps {
     isProcessing: boolean;
@@ -39,6 +40,22 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
     const [sourceFolder, setSourceFolder] = useState('');
     const [totalImageCount, setTotalImageCount] = useState(0);
     const [startTime, setStartTime] = useState<Date | undefined>(undefined);
+    const [folderStats, setFolderStats] = useState<FolderStats | undefined>(undefined);
+
+    useEffect(() => {
+        const fetchFolderStats = async () => {
+            if (sourceFolder) {
+                try {
+                    const stats = await api.getFolderContents(sourceFolder);
+                    setFolderStats(stats);
+                } catch (error: unknown) {
+                    console.error('Failed to fetch folder stats:', error);
+                }
+            }
+        };
+
+        fetchFolderStats();
+    }, [sourceFolder]);
 
     const handleFolderSelect = async (folder: string, imageCount: number) => {
         setSourceFolder(folder);
@@ -51,9 +68,15 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
         await onStartProcessing(sourceFolder);
     };
 
+    const handleReprocessAll = async () => {
+        if (window.confirm('Are you sure you want to reprocess all images? This will overwrite existing captions.')) {
+            setStartTime(new Date());
+            await onStartProcessing(sourceFolder);
+        }
+    };
+
     return (
         <div className="flex flex-col h-screen">
-            {/* Top Controls Section */}
             <div className="p-6 border-b">
                 <StatusSection
                     sourceFolder={sourceFolder}
@@ -71,18 +94,17 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                     modelConfig={modelConfig}
                     activeTemplate={activeTemplate}
                     examples={examples}
+                    folderStats={folderStats}
+                    onReprocessAll={handleReprocessAll}
                 />
             </div>
 
-            {/* Live Feed & Gallery Section */}
             <div className="flex-1 p-6 overflow-hidden">
                 <div className="grid grid-cols-5 gap-6 h-full">
-                    {/* Live Feed */}
                     <div className="col-span-1 overflow-hidden flex flex-col">
                         <LiveFeed processedItems={processedItems}/>
                     </div>
 
-                    {/* Processed Images Gallery */}
                     <div className="col-span-4 overflow-hidden flex flex-col">
                         <ProcessedGallery
                             items={processedItems}
@@ -93,11 +115,10 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                 </div>
             </div>
 
-            {/* Modals */}
             {showFolderSelect && (
                 <FolderSelect
                     currentFolder={sourceFolder}
-                    onSelect={(folder, count) => handleFolderSelect(folder, count)}
+                    onSelect={handleFolderSelect}
                     onClose={() => setShowFolderSelect(false)}
                 />
             )}

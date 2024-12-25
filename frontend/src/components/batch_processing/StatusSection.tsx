@@ -1,9 +1,15 @@
 // frontend/src/components/batch_processing/StatusSection.tsx
 import React from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {FolderOpen, Pause, Play, Square} from 'lucide-react';
+import {AlertCircle, FolderOpen, Pause, Play, RefreshCw, Square} from 'lucide-react';
 import {ExamplePair, ModelConfig, PromptTemplate} from '@/lib/types';
 import {calculateCost, countTokens} from '@/lib/utils/tokenCounter';
+
+export interface FolderStats {
+    total_images: number;
+    captioned: number;
+    uncaptioned: number;
+}
 
 interface StatusSectionProps {
     sourceFolder: string;
@@ -18,7 +24,14 @@ interface StatusSectionProps {
     modelConfig: ModelConfig;
     activeTemplate: PromptTemplate;
     examples: ExamplePair[];
+    folderStats?: {
+        total_images: number;
+        captioned: number;
+        uncaptioned: number;
+    };
+    onReprocessAll?: () => void;
 }
+
 
 // Utility functions
 const formatDuration = (minutes: number): string => {
@@ -112,9 +125,20 @@ const StatusSection: React.FC<StatusSectionProps> = ({
                                                          activeTemplate,
                                                          examples,
                                                          isPaused,
-                                                         onStopProcessing
+                                                         onStopProcessing,
+                                                         folderStats,
+                                                         onReprocessAll
                                                      }) => {
-    const progress = totalCount > 0 ? (processedCount / totalCount) * 100 : 0;
+    const progress = folderStats
+        ? (folderStats.captioned / folderStats.total_images) * 100
+        : totalCount > 0 ? (processedCount / totalCount) * 100 : 0;
+
+    const showReprocessButton = folderStats !== undefined &&
+        folderStats.captioned === folderStats.total_images &&
+        folderStats.total_images > 0;
+    const showStartButton = !showReprocessButton &&
+        folderStats !== undefined &&
+        folderStats.uncaptioned > 0;
     const estimatedTimeLeft = calculateTimeLeft(processedCount, totalCount, startTime);
     const processingSpeed = calculateSpeed(processedCount, startTime);
     const estimatedCompletion = calculateCompletion(startTime, processedCount, totalCount);
@@ -149,8 +173,12 @@ const StatusSection: React.FC<StatusSectionProps> = ({
                             </div>
                         </div>
                         <div className="flex justify-between items-center text-sm">
-                            <span className="text-gray-600">Progress:</span>
-                            <span className="font-medium">{processedCount}/{totalCount} images</span>
+                            <span className="text-gray-600">Status:</span>
+                            {folderStats && (
+                                <span className="font-medium">
+                                    {folderStats.captioned}/{folderStats.total_images} images captioned
+                                </span>
+                            )}
                         </div>
                     </div>
                 </CardContent>
@@ -170,47 +198,26 @@ const StatusSection: React.FC<StatusSectionProps> = ({
                             />
                         </div>
                     </div>
+
+                    {folderStats?.total_images === 0 && (
+                        <div className="flex items-center justify-center gap-2 text-amber-600 mb-4">
+                            <AlertCircle className="w-4 h-4"/>
+                            <span className="text-sm">No images found in this folder</span>
+                        </div>
+                    )}
+
                     <div className="flex justify-center gap-2">
-                        {isProcessing ? (
-                            <>
-                                {isPaused ? (
-                                    <button
-                                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                                        onClick={() => {
-                                            if (!modelConfig.apiKey) {
-                                                alert("Please configure your API key in the settings panel first.");
-                                                return;
-                                            }
-                                            onProcessingToggle();
-                                        }}
-                                    >
-                                        <Play className="w-4 h-4"/>
-                                        Resume Processing
-                                    </button>
-                                ) : (
-                                    <button
-                                        className="px-6 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 flex items-center gap-2"
-                                        onClick={() => {
-                                            if (!modelConfig.apiKey) {
-                                                alert("Please configure your API key in the settings panel first.");
-                                                return;
-                                            }
-                                            onProcessingToggle();
-                                        }}
-                                    >
-                                        <Pause className="w-4 h-4"/>
-                                        Pause Processing
-                                    </button>
-                                )}
-                                <button
-                                    className="px-6 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 flex items-center gap-2"
-                                    onClick={onStopProcessing}
-                                >
-                                    <Square className="w-4 h-4"/>
-                                    Stop
-                                </button>
-                            </>
-                        ) : (
+                        {showReprocessButton && (
+                            <button
+                                className="px-6 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 flex items-center gap-2"
+                                onClick={onReprocessAll}
+                            >
+                                <RefreshCw className="w-4 h-4"/>
+                                Reprocess All
+                            </button>
+                        )}
+
+                        {showStartButton && !isProcessing && (
                             <button
                                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
                                 onClick={() => {
@@ -224,6 +231,35 @@ const StatusSection: React.FC<StatusSectionProps> = ({
                                 <Play className="w-4 h-4"/>
                                 Start Processing
                             </button>
+                        )}
+
+                        {isProcessing && (
+                            <>
+                                {isPaused ? (
+                                    <button
+                                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                                        onClick={onProcessingToggle}
+                                    >
+                                        <Play className="w-4 h-4"/>
+                                        Resume Processing
+                                    </button>
+                                ) : (
+                                    <button
+                                        className="px-6 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 flex items-center gap-2"
+                                        onClick={onProcessingToggle}
+                                    >
+                                        <Pause className="w-4 h-4"/>
+                                        Pause Processing
+                                    </button>
+                                )}
+                                <button
+                                    className="px-6 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 flex items-center gap-2"
+                                    onClick={onStopProcessing}
+                                >
+                                    <Square className="w-4 h-4"/>
+                                    Stop
+                                </button>
+                            </>
                         )}
                     </div>
                 </CardContent>

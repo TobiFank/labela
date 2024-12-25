@@ -1,5 +1,6 @@
 // frontend/src/lib/api.ts
 import {ExamplePair, ModelConfig, ProcessedItem, ProcessingConfig, PromptTemplate} from './types';
+import {FolderStats} from "@/components/batch_processing/StatusSection";
 
 class ApiClient {
     private baseUrl: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
@@ -263,6 +264,14 @@ class ApiClient {
         const response = await fetch(`${this.baseUrl}/folders`);
         if (!response.ok) {
             throw new Error('Failed to fetch folders');
+        }
+        return response.json();
+    }
+
+    async getFolderContents(folderPath: string): Promise<FolderStats> {
+        const response = await fetch(`${this.baseUrl}/folder-contents?folder_path=${encodeURIComponent(folderPath)}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch folder contents');
         }
         return response.json();
     }
