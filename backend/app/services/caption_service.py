@@ -42,6 +42,7 @@ class CaptionService:
         self._paused = False
         self._examples_dir = "/data/examples"  # Root data/examples directory
         self._temp_dir = "/app/backend/temp"   # Backend temp directory
+        self._current_folder = None
 
     def initialize(self):
         self._examples = self.load_examples()
@@ -155,6 +156,7 @@ class CaptionService:
         if self._processing:
             raise RuntimeError("Batch processing is already running")
 
+        self._current_folder = folder_path
         self._processing = True
         self._start_time = datetime.now()
         self._current_batch = 0

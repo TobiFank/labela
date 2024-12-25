@@ -27,21 +27,27 @@ class ApiClient {
         }
     }
 
-    async startBatchProcessing(
-        folder: string,
-        modelConfig: ModelConfig,
-        processingConfig: ProcessingConfig
-    ): Promise<void> {
+    async startBatchProcessing(folder: string, modelConfig: ModelConfig, processingConfig: ProcessingConfig) {
+        const backendSettings = {
+            folder_path: folder,
+            model_settings: {
+                provider: modelConfig.provider,
+                model: modelConfig.model,
+                api_key: modelConfig.apiKey,
+                cost_per_token: modelConfig.costPerToken,
+                temperature: modelConfig.temperature,
+            },
+            processing_settings: {
+                batch_size: processingConfig.batchSize,
+                error_handling: processingConfig.errorHandling,
+                concurrent_processing: processingConfig.concurrentProcessing
+            }
+        };
+
         const response = await fetch(`${this.baseUrl}/batch-process`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                folder_path: folder,
-                model_settings: modelConfig,
-                processing_settings: processingConfig
-            }),
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(backendSettings),
         });
 
         if (!response.ok) {
