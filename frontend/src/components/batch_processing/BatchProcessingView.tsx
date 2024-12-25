@@ -22,7 +22,7 @@ interface BatchProcessingViewProps {
 const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                                                                      isProcessing,
                                                                      isPaused,
-                                                                     processedItems,
+                                                                     processedItems = [],
                                                                      onStartProcessing,
                                                                      onStopProcessing,
                                                                      onPauseProcessing,

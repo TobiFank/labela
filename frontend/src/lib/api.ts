@@ -44,14 +44,23 @@ class ApiClient {
             }
         };
 
-        const response = await fetch(`${this.baseUrl}/batch-process`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(backendSettings),
-        });
+        try {
+            const response = await fetch(`${this.baseUrl}/batch-process`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(backendSettings),
+            });
 
-        if (!response.ok) {
-            throw new Error('Failed to start batch processing');
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to start batch processing');
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Failed to start batch processing:', error);
+            throw error;
         }
     }
 
@@ -65,7 +74,12 @@ class ApiClient {
         status: string;
     }> {
         const response = await fetch(`${this.baseUrl}/batch-process/status`);
-        return response.json();
+        const data = await response.json();
+        return {
+            progress: (data.processedCount / data.totalCount) * 100,
+            processedItems: data.items || [],
+            status: data.isProcessing ? 'processing' : 'completed'
+        };
     }
 
     async uploadExamplePair(image: File, caption: string): Promise<ExamplePair> {
@@ -215,7 +229,7 @@ class ApiClient {
 
         const response = await fetch(`${this.baseUrl}/settings`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(backendSettings),
         });
 

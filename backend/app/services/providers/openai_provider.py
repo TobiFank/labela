@@ -37,29 +37,37 @@ class OpenAIProvider(BaseProvider):
 
         logger.info("Starting caption generation process")
         try:
-            # Initialize messages array with a generic system prompt
+            # Convert image to RGB if needed
+            if image.mode in ('RGBA', 'LA'):
+                logger.info(f"Converting image from {image.mode} to RGB")
+                background = Image.new('RGB', image.size, (255, 255, 255))
+                if image.mode == 'RGBA':
+                    background.paste(image, mask=image.split()[3])  # Use alpha channel as mask
+                else:
+                    background.paste(image, mask=image.split()[1])  # Use alpha channel as mask
+                image = background
+            elif image.mode != 'RGB':
+                logger.info(f"Converting image from {image.mode} to RGB")
+                image = image.convert('RGB')
+
+            # Initialize messages array
             messages = [{
                 "role": "system",
-                "content": "You are a highly accurate image captioning assistant. Your task is to generate detailed, accurate captions for images based on what you can directly observe. Follow the user's instructions carefully for the desired captioning style and format."
+                "content": "You are a highly accurate image captioning assistant..."
             }]
 
-            # Add examples first if provided
-            logger.info(f"Current directory: {os.getcwd()}")
-            logger.info(f"Directory contents of /data/examples: {os.listdir('/data/examples')}")
-
+            # Process examples
             if examples:
                 logger.info(f"Processing {len(examples)} example pairs")
                 for i, example in enumerate(examples):
                     try:
-                        logger.info(f"Processing example {i + 1}: {example.filename}")
-                        image_path = os.path.join('/data/examples', example.filename)
-
-                        if not os.path.exists(image_path):
-                            logger.error(f"Example image not found at path: {image_path}")
+                        # Load and process example image
+                        example_path = os.path.join('/data/examples', example.filename)
+                        if not os.path.exists(example_path):
+                            logger.error(f"Example image not found: {example_path}")
                             continue
 
-                        # For first example, include the template/prompt
-                        with open(image_path, 'rb') as img_file:
+                        with open(example_path, 'rb') as img_file:
                             example_base64 = base64.b64encode(img_file.read()).decode()
 
                         if i == 0 and template:
@@ -76,7 +84,6 @@ class OpenAIProvider(BaseProvider):
                                 ]
                             })
                         else:
-                            # For subsequent examples, just the image
                             messages.append({
                                 "role": "user",
                                 "content": [
@@ -88,25 +95,20 @@ class OpenAIProvider(BaseProvider):
                                     }
                                 ]
                             })
-
-                        # Add assistant's example response
                         messages.append({
                             "role": "assistant",
                             "content": example.caption
                         })
-
-                        logger.info(f"Added example {i + 1} with caption: {example.caption[:100]}...")
-
                     except Exception as e:
                         logger.error(f"Failed to process example {example.filename}: {str(e)}")
                         continue
 
             # Convert the target image to base64
             buffered = BytesIO()
-            image.save(buffered, format="JPEG")
+            image.save(buffered, format="JPEG", quality=95)
             image_base64 = base64.b64encode(buffered.getvalue()).decode()
 
-            # Add the target image message (if no examples/template were provided, include the template here)
+            # Add the target image message
             if not examples and template:
                 messages.append({
                     "role": "user",

@@ -17,9 +17,16 @@ from .models import (
 from .services import caption_service, settings_service
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+
+# Set third-party loggers to WARNING or higher
+logging.getLogger('httpcore').setLevel(logging.WARNING)
+logging.getLogger('httpx').setLevel(logging.WARNING)
+logging.getLogger('python_multipart').setLevel(logging.WARNING)
+logging.getLogger('openai').setLevel(logging.WARNING)
+logging.getLogger('PIL').setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +110,7 @@ async def generate_caption(
 @app.post("/batch-process")
 async def start_batch_processing(request: BatchProcessingRequest):
     try:
-        caption_service.get_caption_service().start_batch_processing(
+        await caption_service.get_caption_service().start_batch_processing(
             folder_path=request.folder_path,
             model_config=request.model_settings,
             processing_config=request.processing_settings

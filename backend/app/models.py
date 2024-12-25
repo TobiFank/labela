@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import List, Optional, Literal
 
 from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 from sqlalchemy import Column, String, Boolean, DateTime, Integer, Float
 
 from .database import Base
@@ -49,6 +50,9 @@ class ProcessingStatus(BaseModelWithConfig):
     estimated_completion: Optional[datetime]
     processing_speed: Optional[float]  # items per minute
     total_cost: float
+
+    class Config:
+        alias_generator = to_camel
 
 
 class BatchProcessingRequest(BaseModelWithConfig):

@@ -244,50 +244,55 @@ export function useAppState() {
 
     const startProcessing = useCallback(async (folder: string) => {
         setState(prev => ({...prev, isProcessing: true, isPaused: false}));
-        await api.startBatchProcessing(
-            folder,
-            state.modelConfig,
-            state.processingConfig
-        );
+        try {
+            await api.startBatchProcessing(
+                folder,
+                state.modelConfig,
+                state.processingConfig
+            );
 
-        const startPolling = () => {
-            // Clear any existing interval
-            if (pollingIntervalRef.current) {
-                clearInterval(pollingIntervalRef.current);
-            }
+            const startPolling = () => {
+                // Clear any existing interval
+                if (pollingIntervalRef.current) {
+                    clearInterval(pollingIntervalRef.current);
+                }
 
-            pollingIntervalRef.current = setInterval(async () => {
-                try {
-                    const status = await api.getProcessingStatus();
-                    setState(prev => {
-                        if (!prev.isProcessing) {
+                pollingIntervalRef.current = setInterval(async () => {
+                    try {
+                        const status = await api.getProcessingStatus();
+                        setState(prev => {
+                            if (!prev.isProcessing) {
+                                if (pollingIntervalRef.current) {
+                                    clearInterval(pollingIntervalRef.current);
+                                }
+                                return prev;
+                            }
+                            return {
+                                ...prev,
+                                processedItems: status.processedItems || [],
+                                isProcessing: status.status !== 'completed',
+                            };
+                        });
+
+                        if (status.status === 'completed') {
                             if (pollingIntervalRef.current) {
                                 clearInterval(pollingIntervalRef.current);
                             }
-                            return prev;
                         }
-                        return {
-                            ...prev,
-                            processedItems: status.processedItems,
-                            isProcessing: status.status !== 'completed',
-                        };
-                    });
-
-                    if (status.status === 'completed') {
+                    } catch (error) {
+                        console.error('Error polling status:', error);
                         if (pollingIntervalRef.current) {
                             clearInterval(pollingIntervalRef.current);
                         }
                     }
-                } catch (error) {
-                    console.error('Error polling status:', error);
-                    if (pollingIntervalRef.current) {
-                        clearInterval(pollingIntervalRef.current);
-                    }
-                }
-            }, 1000);
-        };
+                }, 1000);
+            };
 
-        startPolling();
+            startPolling();
+        } catch (error) {
+            console.error('Failed to start processing:', error);
+            setState(prev => ({...prev, isProcessing: false}));
+        }
     }, [state.modelConfig, state.processingConfig]);
 
     const stopProcessing = useCallback(async () => {

@@ -147,15 +147,31 @@ class CaptionService:
             except Exception as e:
                 logger.error(f"Failed to clean up temporary file: {str(e)}")
 
-    def start_batch_processing(
+    async def start_batch_processing(
             self,
             folder_path: str,
             model_config: ModelConfig,
             processing_config: Optional[ProcessingConfig] = None
     ):
+        """Start batch processing with validation and pre-processing."""
         if self._processing:
             raise RuntimeError("Batch processing is already running")
 
+        # Validate folder exists
+        if not os.path.exists(folder_path):
+            raise RuntimeError(f"Folder not found: {folder_path}")
+
+        # Get list of image files
+        image_files = [
+            f for f in os.listdir(folder_path)
+            if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
+               and not os.path.exists(os.path.splitext(os.path.join(folder_path, f))[0] + '.txt')
+        ]
+
+        if not image_files:
+            raise RuntimeError("No unprocessed images found in folder")
+
+        # Initialize processing
         self._current_folder = folder_path
         self._processing = True
         self._start_time = datetime.now()
@@ -165,7 +181,11 @@ class CaptionService:
 
         # Start the processing task
         self._processing_task = asyncio.create_task(
-            self._process_batch(folder_path, model_config, processing_config or ProcessingConfig())
+            self._process_batch(
+                folder_path,
+                model_config,
+                processing_config or ProcessingConfig()
+            )
         )
 
     async def get_folder_contents(self, folder_path: str) -> dict:
@@ -211,7 +231,7 @@ class CaptionService:
             raise
 
     async def _process_batch(self, folder_path: str, model_config: ModelConfig, processing_config: ProcessingConfig):
-        """Process a batch of images with concurrent processing limits"""
+        """Process a batch of images with error handling."""
         try:
             provider = self._providers[model_config.provider]
             provider.configure(model_config)
@@ -227,7 +247,8 @@ class CaptionService:
             logger.info(f"Found {total_images} images without captions")
 
             # Process in batches
-            for i in range(0, total_images, processing_config.batch_size):
+            batch_size = min(processing_config.batch_size, total_images)
+            for i in range(0, total_images, batch_size):
                 if not self._processing:
                     break
 
@@ -236,46 +257,37 @@ class CaptionService:
                     if not self._processing:
                         break
 
-                batch = image_files[i:i + processing_config.batch_size]
+                batch = image_files[i:i + batch_size]
                 self._current_batch += 1
 
                 # Process batch with concurrency control
-                running_tasks = set()
-                completed_tasks = []
+                tasks = []
+                sem = asyncio.Semaphore(processing_config.concurrent_processing)
+
+                async def process_with_semaphore(filepath):
+                    async with sem:
+                        return await self._process_single_image(filepath, provider)
 
                 for filename in batch:
                     filepath = os.path.join(folder_path, filename)
+                    task = asyncio.create_task(process_with_semaphore(filepath))
+                    tasks.append(task)
 
-                    # Wait if we've hit the concurrency limit
-                    if len(running_tasks) >= processing_config.concurrent_processing:
-                        done, running_tasks = await asyncio.wait(
-                            running_tasks,
-                            return_when=asyncio.FIRST_COMPLETED
-                        )
-                        completed_tasks.extend(done)
+                # Wait for all tasks in this batch
+                results = await asyncio.gather(*tasks, return_exceptions=True)
 
-                    # Create and add new task
-                    task = asyncio.create_task(self._process_single_image(filepath, provider))
-                    running_tasks.add(task)
-
-                # Wait for any remaining tasks in this batch
-                if running_tasks:
-                    done, _ = await asyncio.wait(running_tasks)
-                    completed_tasks.extend(done)
-
-                # Process all completed tasks
-                for task in completed_tasks:
-                    try:
-                        processed_item = await task
-                        self._processed_items.append(processed_item)
-                    except Exception as e:
-                        logger.error(f"Error processing file: {str(e)}")
+                # Handle results
+                for result in results:
+                    if isinstance(result, Exception):
+                        logger.error(f"Error processing file: {str(result)}")
                         if processing_config.error_handling == "stop":
-                            raise
+                            raise result
+                    elif isinstance(result, ProcessedItem):
+                        self._processed_items.append(result)
 
         except Exception as e:
             logger.error(f"Batch processing error: {str(e)}")
-            raise  # Re-raise to ensure error is properly handled
+            raise
         finally:
             self._processing = False
             logger.info("Batch processing completed")
@@ -284,7 +296,30 @@ class CaptionService:
         try:
             # Generate caption
             image = Image.open(image_path)
-            caption = await provider.generate_caption(image)
+            logger.info(f"Processing image {os.path.basename(image_path)} with mode {image.mode}")
+
+            # Convert RGBA images to RGB with white background
+            if image.mode in ('RGBA', 'LA'):
+                logger.info(f"Converting image from {image.mode} to RGB")
+                background = Image.new('RGB', image.size, (255, 255, 255))
+                if image.mode == 'RGBA':
+                    background.paste(image, mask=image.split()[3])  # Use alpha channel as mask
+                else:
+                    background.paste(image, mask=image.split()[1])  # Use alpha channel as mask
+                image = background
+            elif image.mode != 'RGB':
+                logger.info(f"Converting image from {image.mode} to RGB")
+                image = image.convert('RGB')
+
+            logger.info(f"Image converted to mode {image.mode}")
+
+            active_template = self._get_active_template()
+            examples = self.load_examples()
+            caption = await provider.generate_caption(
+                image=image,
+                template=active_template.content if active_template else None,
+                examples=examples
+            )
 
             # Save caption to a txt file next to the image
             caption_path = os.path.splitext(image_path)[0] + '.txt'
@@ -317,38 +352,74 @@ class CaptionService:
             self._processing_task.cancel()
 
     def get_processing_status(self) -> ProcessingStatus:
-        total_count = len([
-            f for f in os.listdir(self._current_folder)
-            if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
-        ]) if self._processing else 0
+        try:
+            if not self._current_folder:
+                return ProcessingStatus(
+                    is_processing=False,
+                    processed_count=0,
+                    total_count=0,
+                    current_batch=0,
+                    items=[],
+                    error_count=0,
+                    start_time=None,
+                    estimated_completion=None,
+                    processing_speed=None,
+                    total_cost=0.0
+                )
 
-        processed_count = len(self._processed_items)
+            total_count = len([
+                f for f in os.listdir(self._current_folder)
+                if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
+            ]) if self._processing else 0
 
-        # Calculate processing speed if applicable
-        processing_speed = None
-        if self._start_time and processed_count > 0:
-            elapsed_time = (datetime.now() - self._start_time).total_seconds() / 60  # minutes
-            processing_speed = processed_count / elapsed_time if elapsed_time > 0 else 0
+            processed_count = len(self._processed_items)
 
-        # Estimate completion time
-        estimated_completion = None
-        if processing_speed and total_count > processed_count:
-            remaining_items = total_count - processed_count
-            remaining_minutes = remaining_items / processing_speed
-            estimated_completion = datetime.now() + timedelta(minutes=remaining_minutes)
+            # Calculate processing speed if applicable
+            processing_speed = None
+            if self._start_time and processed_count > 0:
+                elapsed_time = (datetime.now() - self._start_time).total_seconds() / 60  # minutes
+                processing_speed = processed_count / elapsed_time if elapsed_time > 0 else 0
 
-        return ProcessingStatus(
-            is_processing=self._processing,
-            processed_count=processed_count,
-            total_count=total_count,
-            current_batch=self._current_batch,
-            items=self._processed_items,
-            error_count=sum(1 for item in self._processed_items if item.status == "error"),
-            start_time=self._start_time,
-            estimated_completion=estimated_completion,
-            processing_speed=processing_speed,
-            total_cost=self._total_cost
-        )
+            # Estimate completion time
+            estimated_completion = None
+            if processing_speed and processing_speed > 0 and total_count > processed_count:
+                remaining_items = total_count - processed_count
+                remaining_minutes = remaining_items / processing_speed
+                estimated_completion = datetime.now() + timedelta(minutes=remaining_minutes)
+
+            # Filter out any invalid items
+            valid_items = [
+                item for item in self._processed_items
+                if isinstance(item, ProcessedItem)
+            ]
+
+            return ProcessingStatus(
+                is_processing=self._processing,
+                processed_count=processed_count,
+                total_count=total_count,
+                current_batch=self._current_batch,
+                items=valid_items,
+                error_count=sum(1 for item in valid_items if item.status == "error"),
+                start_time=self._start_time,
+                estimated_completion=estimated_completion,
+                processing_speed=processing_speed,
+                total_cost=self._total_cost
+            )
+        except Exception as e:
+            logger.error(f"Error getting processing status: {str(e)}")
+            # Return a valid status even if there's an error
+            return ProcessingStatus(
+                is_processing=False,
+                processed_count=0,
+                total_count=0,
+                current_batch=0,
+                items=[],
+                error_count=0,
+                start_time=None,
+                estimated_completion=None,
+                processing_speed=None,
+                total_cost=0.0
+            )
 
     def pause_processing(self):
         """Pause the current processing"""
