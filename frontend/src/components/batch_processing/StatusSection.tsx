@@ -176,7 +176,13 @@ const StatusSection: React.FC<StatusSectionProps> = ({
                                 {isPaused ? (
                                     <button
                                         className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                                        onClick={onProcessingToggle}
+                                        onClick={() => {
+                                            if (!modelConfig.apiKey) {
+                                                alert("Please configure your API key in the settings panel first.");
+                                                return;
+                                            }
+                                            onProcessingToggle();
+                                        }}
                                     >
                                         <Play className="w-4 h-4"/>
                                         Resume Processing
@@ -184,7 +190,13 @@ const StatusSection: React.FC<StatusSectionProps> = ({
                                 ) : (
                                     <button
                                         className="px-6 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 flex items-center gap-2"
-                                        onClick={onProcessingToggle}
+                                        onClick={() => {
+                                            if (!modelConfig.apiKey) {
+                                                alert("Please configure your API key in the settings panel first.");
+                                                return;
+                                            }
+                                            onProcessingToggle();
+                                        }}
                                     >
                                         <Pause className="w-4 h-4"/>
                                         Pause Processing
@@ -201,7 +213,13 @@ const StatusSection: React.FC<StatusSectionProps> = ({
                         ) : (
                             <button
                                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                                onClick={onProcessingToggle}
+                                onClick={() => {
+                                    if (!modelConfig.apiKey) {
+                                        alert("Please configure your API key in the settings panel first.");
+                                        return;
+                                    }
+                                    onProcessingToggle();
+                                }}
                             >
                                 <Play className="w-4 h-4"/>
                                 Start Processing
