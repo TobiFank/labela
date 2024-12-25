@@ -26,14 +26,11 @@ logger = logging.getLogger(__name__)
 
 def setup_data_directories():
     """Ensure data directories exist with proper permissions"""
-    # Create backend temp directory
-    backend_temp_dir = "backend/data/temp"
-    os.makedirs(backend_temp_dir, mode=0o755, exist_ok=True)
-
     # Create root data directories
     root_data_dirs = [
         "/data",           # Root data dir
         "/data/examples"   # Examples dir
+        "/app/backend/data/temp"  # Temp dir
     ]
 
     for directory in root_data_dirs:
@@ -74,6 +71,7 @@ async def generate_caption(
     try:
         # Get settings and log them
         settings = settings_service.get_settings_service().get_settings()
+
         logger.info("Using settings:")
         logger.info(f"  Provider: {settings['provider']}")
         logger.info(f"  Model: {settings['model']}")
@@ -319,7 +317,7 @@ async def list_folders():
 
 caption_service.initialize_service()
 
-app.mount("/examples", StaticFiles(directory="data/examples"), name="examples")
+app.mount("/examples", StaticFiles(directory="/data/examples"), name="examples")
 
 if __name__ == "__main__":
     import uvicorn

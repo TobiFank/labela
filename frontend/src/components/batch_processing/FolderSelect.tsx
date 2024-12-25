@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 
 interface FolderSelectProps {
     currentFolder: string;
-    onSelect: (folder: string) => void;
+    onSelect: (folder: string, imageCount: number) => void;
     onClose: () => void;
 }
 
@@ -30,7 +30,13 @@ const FolderSelect: React.FC<FolderSelectProps> = ({
     const loadFolders = async () => {
         try {
             const folderList = await api.getFolders();
-            const processableFolders = folderList.filter((f: FolderInfo) => f.name !== 'examples');
+            const processableFolders = folderList
+                .filter((f: FolderInfo) => f.name !== 'examples')
+                .map((f: FolderInfo) => ({
+                    ...f,
+                    path: f.path,  // Use actual path from backend
+                    image_count: f.image_count // Use actual count
+                }));
             setFolders(processableFolders);
         } catch (error) {
             console.error('Failed to load folders:', error);
@@ -52,7 +58,7 @@ const FolderSelect: React.FC<FolderSelectProps> = ({
                                 className={`p-3 flex items-center justify-between rounded-lg cursor-pointer hover:bg-gray-100 ${
                                     currentFolder === folder.path ? 'bg-blue-50' : ''
                                 }`}
-                                onClick={() => onSelect(folder.path)}
+                                onClick={() => onSelect(folder.path, folder.image_count)}
                             >
                                 <div className="flex items-center gap-2">
                                     <Folder className="w-4 h-4 text-gray-500" />

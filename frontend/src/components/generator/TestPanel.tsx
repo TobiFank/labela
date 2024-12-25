@@ -10,7 +10,6 @@ interface TestPanelProps {
     modelConfig: ModelConfig;
     examples: ExamplePair[];
     activeTemplate: PromptTemplate;
-    onAddExample: (image: File, caption: string) => Promise<void>;
 }
 
 const TestPanel: React.FC<TestPanelProps> = ({
@@ -18,7 +17,6 @@ const TestPanel: React.FC<TestPanelProps> = ({
                                                  modelConfig,
                                                  examples = [], // Provide default empty array
                                                  activeTemplate,
-                                                 onAddExample
                                              }) => {
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -67,11 +65,15 @@ const TestPanel: React.FC<TestPanelProps> = ({
 
     const handleGenerate = async () => {
         if (!selectedImage) return;
+        if (!modelConfig.apiKey) {
+            alert("Please configure your API key in the settings panel first.");
+            return;
+        }
         setIsGenerating(true);
         try {
             const caption = await onGenerateCaption(selectedImage);
             setGeneratedCaption(caption);
-            await onAddExample(selectedImage, caption);
+            localStorage.setItem('lastGeneratedCaption', caption);
         } catch (error) {
             console.error('Failed:', error);
         } finally {

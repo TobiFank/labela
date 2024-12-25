@@ -41,7 +41,7 @@ class CaptionService:
         self._examples = []
         self._paused = False
         self._examples_dir = "/data/examples"  # Root data/examples directory
-        self._temp_dir = "backend/data/temp"   # Backend temp directory
+        self._temp_dir = "/app/backend/data/temp"   # Backend temp directory
 
     def initialize(self):
         self._examples = self.load_examples()

@@ -59,7 +59,6 @@ const GeneratorView: React.FC<GeneratorViewProps> = ({
                     modelConfig={modelConfig}
                     examples={examples}
                     activeTemplate={activeTemplate}
-                    onAddExample={onAddExample}
                 />
             </div>
 

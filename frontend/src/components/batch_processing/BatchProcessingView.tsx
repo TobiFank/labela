@@ -32,14 +32,19 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
     const [selectedImage, setSelectedImage] = useState<ProcessedItem | null>(null);
     const [showFolderSelect, setShowFolderSelect] = useState(false);
     const [showQuickReview, setShowQuickReview] = useState(false);
-    const [sourceFolder, setSourceFolder] = useState('/projects/architecture/raw');
+    const [sourceFolder, setSourceFolder] = useState('');
+    const [totalImageCount, setTotalImageCount] = useState(0);
     const [startTime, setStartTime] = useState<Date | undefined>(undefined);
 
-    const handleFolderSelect = async (folder: string) => {
+    const handleFolderSelect = async (folder: string, imageCount: number) => {
         setSourceFolder(folder);
+        setTotalImageCount(imageCount);
         setShowFolderSelect(false);
+    };
+
+    const handleStartProcessing = async () => {
         setStartTime(new Date());
-        await onStartProcessing(folder);
+        await onStartProcessing(sourceFolder);
     };
 
     return (
@@ -53,11 +58,11 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                     onFolderSelectClick={() => setShowFolderSelect(true)}
                     onProcessingToggle={isProcessing ?
                         (isPaused ? onResumeProcessing : onPauseProcessing) :
-                        () => onStartProcessing(sourceFolder)
+                        handleStartProcessing
                     }
                     onStopProcessing={onStopProcessing}
                     processedCount={processedItems.length}
-                    totalCount={1234}
+                    totalCount={totalImageCount}
                     startTime={startTime}
                     costPerToken={modelConfig.costPerToken}
                 />
@@ -86,7 +91,7 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
             {showFolderSelect && (
                 <FolderSelect
                     currentFolder={sourceFolder}
-                    onSelect={handleFolderSelect}
+                    onSelect={(folder, count) => handleFolderSelect(folder, count)}
                     onClose={() => setShowFolderSelect(false)}
                 />
             )}
