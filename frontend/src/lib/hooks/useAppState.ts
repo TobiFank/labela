@@ -296,8 +296,10 @@ export function useAppState() {
     }, []);
 
     const generateCaption = useCallback(async (image: File) => {
-        return api.generateCaption(image);
-    }, []);
+        const caption = await api.generateCaption(image);
+        await addExample(image, caption);
+        return caption;
+    }, [addExample]);
 
     return {
         state,

@@ -1,22 +1,24 @@
 // frontend/src/components/generator/TestPanel.tsx
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, Upload } from 'lucide-react';
-import { ModelConfig, ExamplePair, PromptTemplate } from '@/lib/types';
-import {countTokens, calculateCost, getImageDimensions, getImageTokenCount} from '@/lib/utils/tokenCounter';
+import React, {useEffect, useState} from 'react';
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Copy, Upload} from 'lucide-react';
+import {ExamplePair, ModelConfig, PromptTemplate} from '@/lib/types';
+import {calculateCost, countTokens, getImageDimensions, getImageTokenCount} from '@/lib/utils/tokenCounter';
 
 interface TestPanelProps {
     onGenerateCaption: (image: File) => Promise<string>;
     modelConfig: ModelConfig;
     examples: ExamplePair[];
     activeTemplate: PromptTemplate;
+    onAddExample: (image: File, caption: string) => Promise<void>;
 }
 
 const TestPanel: React.FC<TestPanelProps> = ({
                                                  onGenerateCaption,
                                                  modelConfig,
                                                  examples = [], // Provide default empty array
-                                                 activeTemplate
+                                                 activeTemplate,
+                                                 onAddExample
                                              }) => {
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -36,6 +38,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
                 setSelectedImageTokens(0);
             }
         }
+
         updateImageTokens();
     }, [selectedImage]);
 
@@ -68,8 +71,9 @@ const TestPanel: React.FC<TestPanelProps> = ({
         try {
             const caption = await onGenerateCaption(selectedImage);
             setGeneratedCaption(caption);
+            await onAddExample(selectedImage, caption);
         } catch (error) {
-            console.error('Failed to generate caption:', error);
+            console.error('Failed:', error);
         } finally {
             setIsGenerating(false);
         }

@@ -40,6 +40,8 @@ class CaptionService:
         self._db: Session = SessionLocal()
         self._examples = []
         self._paused = False
+        self._examples_dir = "/data/examples"  # Root data/examples directory
+        self._temp_dir = "backend/data/temp"   # Backend temp directory
 
     def initialize(self):
         self._examples = self.load_examples()
@@ -333,18 +335,20 @@ class CaptionService:
 
     async def save_example(self, image: UploadFile, caption: str) -> ExamplePair:
         try:
-            # Create examples directory if it doesn't exist
-            os.makedirs("data/examples", exist_ok=True)
-
             # Generate unique filename with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{timestamp}_{image.filename}"
-            filepath = os.path.join("data/examples", filename)
+            filepath = os.path.join(self._examples_dir, filename)
+            caption_path = os.path.splitext(filepath)[0] + '.txt'
 
-            # Save file
+            # Save image
             async with aiofiles.open(filepath, 'wb') as out_file:
                 content = await image.read()
                 await out_file.write(content)
+
+            # Save caption
+            async with aiofiles.open(caption_path, 'w') as out_file:
+                await out_file.write(caption)
 
             # Create database entry
             with SessionLocal() as db:

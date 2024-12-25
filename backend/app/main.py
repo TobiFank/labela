@@ -26,21 +26,23 @@ logger = logging.getLogger(__name__)
 
 def setup_data_directories():
     """Ensure data directories exist with proper permissions"""
-    directories = [
-        "data",
-        "data/examples",
-        "backend/data",
-        "backend/data/temp"
+    # Create backend temp directory
+    backend_temp_dir = "backend/data/temp"
+    os.makedirs(backend_temp_dir, mode=0o755, exist_ok=True)
+
+    # Create root data directories
+    root_data_dirs = [
+        "/data",           # Root data dir
+        "/data/examples"   # Examples dir
     ]
 
-    for directory in directories:
+    for directory in root_data_dirs:
         try:
-            os.makedirs(directory, mode=0o777, exist_ok=True)
-            os.chmod(directory, 0o777)  # Ensure directory is world-writable
+            os.makedirs(directory, mode=0o777, exist_ok=True)  # World-writable for user access
+            os.chmod(directory, 0o777)  # Ensure permissions are set
             logger.info(f"Ensured {directory} exists with proper permissions")
         except Exception as e:
             logger.error(f"Failed to setup {directory}: {str(e)}")
-            # Don't raise here, just log the error
 
 
 setup_data_directories()
@@ -292,12 +294,11 @@ async def get_folder_contents(folder_path: str):
 @app.get("/folders")
 async def list_folders():
     """List all available folders in the data directory"""
-    # Important: Use absolute path from project root
-    base_dir = "./data"  # This points to the root data folder
+    base_dir = "/data"  # This is the mounted root data folder
     folders = []
 
     for item in os.listdir(base_dir):
-        if item == "examples":  # Skip examples folder
+        if item in ["temp", "examples"]:  # Skip system folders
             continue
 
         full_path = os.path.join(base_dir, item)

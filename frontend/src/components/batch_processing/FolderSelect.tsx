@@ -30,7 +30,8 @@ const FolderSelect: React.FC<FolderSelectProps> = ({
     const loadFolders = async () => {
         try {
             const folderList = await api.getFolders();
-            setFolders(folderList);
+            const processableFolders = folderList.filter((f: FolderInfo) => f.name !== 'examples');
+            setFolders(processableFolders);
         } catch (error) {
             console.error('Failed to load folders:', error);
         }
