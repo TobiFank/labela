@@ -18,12 +18,12 @@ interface FeedItem {
 
 const LiveFeed: React.FC<LiveFeedProps> = ({processedItems}) => {
     // In a real app, you'd maintain a separate feed of processing events
-    const feedItems: FeedItem[] = processedItems.map((item, index) => ({
+    const feedItems: FeedItem[] = processedItems.slice().reverse().map(item => ({
         id: item.id,
         filename: item.filename,
-        status: Math.random() > 0.2 ? 'success' : 'error', // Simulated status
-        message: Math.random() > 0.2 ? 'Caption generated successfully' : 'API Error: Retrying...',
-        timestamp: `${index}m ago`,
+        status: item.status === 'success' ? 'success' : 'error',
+        message: item.status === 'success' ? 'Caption generated successfully' : 'Processing failed',
+        timestamp: new Date(item.timestamp).toLocaleTimeString(),
     }));
 
     return (

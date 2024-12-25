@@ -38,6 +38,15 @@ const QuickReview: React.FC<QuickReviewProps> = ({items, onClose}) => {
         handleNext();
     };
 
+    const getImageUrl = (imagePath: string) => {
+        // If the URL is already complete, return it
+        if (imagePath.startsWith('http')) {
+            return imagePath;
+        }
+        // Otherwise, prepend the base URL
+        return `http://localhost:8000/api${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    };
+
     const currentItem = items[currentIndex];
 
     if (!currentItem) return null;
@@ -72,11 +81,11 @@ const QuickReview: React.FC<QuickReviewProps> = ({items, onClose}) => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 flex-grow">
-                    <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                    <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center h-full">
                         <img
-                            src={currentItem.image}
-                            alt="Preview"
-                            className="w-full h-full object-cover"
+                            src={getImageUrl(currentItem.image)}
+                            alt={currentItem.filename}
+                            className="max-w-full max-h-[70vh] object-contain"
                         />
                     </div>
 
