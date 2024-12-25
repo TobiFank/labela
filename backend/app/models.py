@@ -40,19 +40,16 @@ class ProcessedItem(BaseModelWithConfig):
 
 
 class ProcessingStatus(BaseModelWithConfig):
-    is_processing: bool
-    processed_count: int
-    total_count: int
-    current_batch: int
+    isProcessing: bool
+    processedCount: int
+    totalCount: int
+    currentBatch: int
     items: List[ProcessedItem]
-    error_count: int
-    start_time: Optional[datetime]
-    estimated_completion: Optional[datetime]
-    processing_speed: Optional[float]  # items per minute
-    total_cost: float
-
-    class Config:
-        alias_generator = to_camel
+    errorCount: int
+    startTime: Optional[datetime]
+    estimatedCompletion: Optional[datetime]
+    processingSpeed: Optional[float]  # items per minute
+    totalCost: float
 
 
 class BatchProcessingRequest(BaseModelWithConfig):
@@ -137,6 +134,7 @@ class DBSettings(Base):
             "error_handling": self.error_handling,
             "concurrent_processing": self.concurrent_processing
         }
+
 
 class DBProcessedItem(Base):
     __tablename__ = "processed_items"

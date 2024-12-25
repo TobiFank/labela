@@ -355,16 +355,16 @@ class CaptionService:
         try:
             if not self._current_folder:
                 return ProcessingStatus(
-                    is_processing=False,
-                    processed_count=0,
-                    total_count=0,
-                    current_batch=0,
+                    isProcessing=False,
+                    processedCount=0,
+                    totalCount=0,
+                    currentBatch=0,
                     items=[],
-                    error_count=0,
-                    start_time=None,
-                    estimated_completion=None,
-                    processing_speed=None,
-                    total_cost=0.0
+                    errorCount=0,
+                    startTime=None,
+                    estimatedCompletion=None,
+                    processingSpeed=None,
+                    totalCost=0.0
                 )
 
             total_count = len([
@@ -394,31 +394,31 @@ class CaptionService:
             ]
 
             return ProcessingStatus(
-                is_processing=self._processing,
-                processed_count=processed_count,
-                total_count=total_count,
-                current_batch=self._current_batch,
+                isProcessing=self._processing,
+                processedCount=processed_count,
+                totalCount=total_count,
+                currentBatch=self._current_batch,
                 items=valid_items,
-                error_count=sum(1 for item in valid_items if item.status == "error"),
-                start_time=self._start_time,
-                estimated_completion=estimated_completion,
-                processing_speed=processing_speed,
-                total_cost=self._total_cost
+                errorCount=sum(1 for item in valid_items if item.status == "error"),
+                startTime=self._start_time,
+                estimatedCompletion=estimated_completion,
+                processingSpeed=processing_speed,
+                totalCost=self._total_cost
             )
         except Exception as e:
             logger.error(f"Error getting processing status: {str(e)}")
             # Return a valid status even if there's an error
             return ProcessingStatus(
-                is_processing=False,
-                processed_count=0,
-                total_count=0,
-                current_batch=0,
+                isProcessing=False,
+                processedCount=0,
+                totalCount=0,
+                currentBatch=0,
                 items=[],
-                error_count=0,
-                start_time=None,
-                estimated_completion=None,
-                processing_speed=None,
-                total_cost=0.0
+                errorCount=0,
+                startTime=None,
+                estimatedCompletion=None,
+                processingSpeed=None,
+                totalCost=0.0
             )
 
     def pause_processing(self):
