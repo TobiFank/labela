@@ -18,7 +18,7 @@ from ..models import (
     ProcessingConfig,
     ProcessedItem,
     ProcessingStatus,
-    ExamplePair, PromptTemplate, DBPromptTemplate, DBExample
+    ExamplePair, PromptTemplate, DBPromptTemplate, DBExample, DBProcessedItem
 )
 
 logger = logging.getLogger(__name__)
@@ -582,6 +582,35 @@ class CaptionService:
             result = db.query(DBPromptTemplate).filter(DBPromptTemplate.id == template_id).delete()
             db.commit()
             return result > 0
+
+    def update_caption(self, item_id: int, new_caption: str) -> ProcessedItem:
+        """Update caption for a processed item"""
+        try:
+            # Find the item in the processed items
+            item = next((item for item in self._processed_items if item.id == item_id), None)
+            if not item:
+                raise ValueError(f"No item found with id {item_id}")
+
+            # Update the caption in the text file
+            caption_path = os.path.splitext(item.image)[0] + '.txt'
+            with open(caption_path, 'w') as f:
+                f.write(new_caption)
+
+            # Update the item in memory
+            item.caption = new_caption
+
+            # Update in database if using one
+            if hasattr(self, '_db'):
+                with self._db as db:
+                    db_item = db.query(DBProcessedItem).filter(DBProcessedItem.id == str(item_id)).first()
+                    if db_item:
+                        db_item.caption = new_caption
+                        db.commit()
+
+            return item
+        except Exception as e:
+            logger.error(f"Error updating caption: {str(e)}")
+            raise RuntimeError(f"Failed to update caption: {str(e)}")
 
 
 _caption_service = None

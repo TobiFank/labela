@@ -36,27 +36,33 @@ const QuickReview: React.FC<QuickReviewProps> = ({items, onClose}) => {
         if (editMode && editedCaption !== updatedItems[currentIndex].caption) {
             setIsSaving(true);
             try {
-                // Save the edited caption using the API
+                // Update the caption
                 const updatedItem = await api.updateProcessedItemCaption(
                     updatedItems[currentIndex].id,
                     editedCaption
                 );
 
-                // Update the local state with the new caption
-                setUpdatedItems(items.map(item =>
-                    item.id === updatedItem.id ? updatedItem : item
-                ));
+                // Update local state
+                setUpdatedItems(prevItems =>
+                    prevItems.map(item =>
+                        item.id === updatedItem.id ? updatedItem : item
+                    )
+                );
 
+                // Exit edit mode
+                setEditMode(false);
+
+                // Move to next item
+                handleNext();
             } catch (error) {
                 console.error('Failed to save caption:', error);
-                // Optionally show an error message to the user
                 alert('Failed to save caption changes. Please try again.');
-                return;
             } finally {
                 setIsSaving(false);
             }
+        } else {
+            handleNext();
         }
-        handleNext();
     };
 
     const getImageUrl = (imagePath: string) => {

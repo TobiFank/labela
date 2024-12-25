@@ -12,7 +12,7 @@ from .models import (
     ProcessingStatus,
     BatchProcessingRequest,
     CaptionResponse,
-    ModelConfig, PromptTemplate, SettingsUpdate
+    ModelConfig, PromptTemplate, SettingsUpdate, ProcessedItem, CaptionUpdate
 )
 from .services import caption_service, settings_service
 
@@ -174,10 +174,10 @@ async def remove_example(example_id: int):
     return {"message": "Example removed successfully"}
 
 
-@app.put("/processed-items/{item_id}/caption")
-async def update_caption(item_id: int, caption: str = Body(...)):
+@app.put("/processed-items/{item_id}/caption", response_model=ProcessedItem)
+async def update_caption(item_id: int, update: CaptionUpdate):
     try:
-        updated_item = await caption_service.get_caption_service().update_caption(item_id, caption)
+        updated_item = caption_service.get_caption_service().update_caption(item_id, update.caption)
         return updated_item
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

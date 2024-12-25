@@ -76,6 +76,10 @@ class PromptTemplate(BaseModel):
     isDefault: bool = False
 
 
+class CaptionUpdate(BaseModel):
+    caption: str
+
+
 class SettingsUpdate(BaseModelWithConfig):
     provider: Optional[str] = None
     model: Optional[str] = None

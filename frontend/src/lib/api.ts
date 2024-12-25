@@ -106,11 +106,12 @@ class ApiClient {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({caption}),
+            body: JSON.stringify({ caption }),
         });
 
         if (!response.ok) {
-            throw new Error('Failed to update caption');
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to update caption');
         }
 
         return response.json();
