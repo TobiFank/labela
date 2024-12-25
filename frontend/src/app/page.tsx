@@ -1,8 +1,8 @@
 // frontend/src/app/page.tsx
 'use client';
 
-import { useAppState } from '@/lib/hooks/useAppState';
-import { useState } from 'react';
+import {useAppState} from '@/lib/hooks/useAppState';
+import {useState} from 'react';
 import GeneratorView from "@/components/generator/GeneratorView";
 import SettingsModal from "@/components/settings/SettingsModal";
 import Navigation from "@/components/shared/Navigation";
@@ -51,7 +51,7 @@ const AppPage = () => {
                     onTemplateUpdate={updateTemplate}
                     onTemplateDelete={deleteTemplate}
                 />
-            ) : (
+            ) : state.currentView === 'batch' ? (
                 <BatchProcessingView
                     isProcessing={state.isProcessing}
                     isPaused={state.isPaused}
@@ -62,8 +62,10 @@ const AppPage = () => {
                     onResumeProcessing={resumeProcessing}
                     modelConfig={state.modelConfig}
                     processingConfig={state.processingConfig}
+                    examples={state.examples}
+                    activeTemplate={state.activeTemplate}
                 />
-            )}
+            ) : null}
 
             <SettingsModal
                 isOpen={showSettingsModal}

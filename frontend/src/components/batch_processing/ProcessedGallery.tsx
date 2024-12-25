@@ -23,6 +23,15 @@ const ProcessedGallery: React.FC<ProcessedGalleryProps> = ({
         setEditingCaptionId(null);
     };
 
+    const getImageUrl = (imagePath: string) => {
+        // If the URL is already complete, return it
+        if (imagePath.startsWith('http')) {
+            return imagePath;
+        }
+        // Otherwise, prepend the base URL
+        return `http://localhost:8000${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    };
+
     return (
         <Card className="flex-1 flex flex-col">
             <CardHeader>
@@ -44,7 +53,7 @@ const ProcessedGallery: React.FC<ProcessedGalleryProps> = ({
                                 {/* Image Preview */}
                                 <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
                                     <img
-                                        src={item.image}
+                                        src={getImageUrl(item.image)}
                                         alt={item.filename}
                                         className="w-full h-full object-cover cursor-pointer hover:opacity-90"
                                         onClick={() => onImageSelect(item)}

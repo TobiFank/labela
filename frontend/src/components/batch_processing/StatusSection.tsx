@@ -2,18 +2,22 @@
 import React from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {FolderOpen, Pause, Play, Square} from 'lucide-react';
+import {ExamplePair, ModelConfig, PromptTemplate} from '@/lib/types';
+import {calculateCost, countTokens} from '@/lib/utils/tokenCounter';
 
 interface StatusSectionProps {
-    sourceFolder: string,
-    isProcessing: boolean,
-    onFolderSelectClick: () => void,
-    onProcessingToggle: () => void,
-    onStopProcessing: () => void,
-    processedCount: number,
-    totalCount: number,
-    startTime?: Date,
-    costPerToken: number,
-    isPaused?: boolean
+    sourceFolder: string;
+    isProcessing: boolean;
+    isPaused?: boolean;
+    onFolderSelectClick: () => void;
+    onProcessingToggle: () => void;
+    onStopProcessing: () => void;
+    processedCount: number;
+    totalCount: number;
+    startTime?: Date;
+    modelConfig: ModelConfig;
+    activeTemplate: PromptTemplate;
+    examples: ExamplePair[];
 }
 
 // Utility functions
@@ -46,10 +50,42 @@ const calculateSpeed = (processedCount: number, startTime?: Date): string => {
     return `${imagesPerMinute.toFixed(1)}/min`;
 };
 
-const calculateCost = (processedCount: number, costPerToken: number): string => {
-    const estimatedTokensPerImage = 150; // Average estimation
-    const totalCost = (processedCount * estimatedTokensPerImage * costPerToken) / 1000;
-    return `$${totalCost.toFixed(2)}`;
+const calculateDetailedCost = (
+    processedCount: number,
+    totalCount: number,
+    modelConfig: ModelConfig,
+    template: PromptTemplate,
+    examples: ExamplePair[]
+): { currentCost: string; estimatedTotalCost: string; tokenCounts: ReturnType<typeof countTokens> } => {
+    const tokenCount = countTokens(template, examples);
+
+    const tokensPerImage =
+        tokenCount.systemPromptTokens +
+        tokenCount.templateTokens +
+        tokenCount.exampleTokens +
+        tokenCount.imageTokens;
+
+    const currentCost = calculateCost(
+        {
+            ...tokenCount,
+            totalTokens: tokensPerImage * processedCount
+        },
+        modelConfig.costPerToken
+    );
+
+    const estimatedTotalCost = calculateCost(
+        {
+            ...tokenCount,
+            totalTokens: tokensPerImage * totalCount
+        },
+        modelConfig.costPerToken
+    );
+
+    return {
+        currentCost: `$${currentCost.toFixed(4)}`,
+        estimatedTotalCost: `$${estimatedTotalCost.toFixed(4)}`,
+        tokenCounts: tokenCount
+    };
 };
 
 const calculateCompletion = (startTime?: Date, processedCount?: number, totalCount?: number): string => {
@@ -72,15 +108,24 @@ const StatusSection: React.FC<StatusSectionProps> = ({
                                                          processedCount,
                                                          totalCount,
                                                          startTime,
-                                                         costPerToken,
+                                                         modelConfig,
+                                                         activeTemplate,
+                                                         examples,
                                                          isPaused,
-    onStopProcessing
+                                                         onStopProcessing
                                                      }) => {
     const progress = totalCount > 0 ? (processedCount / totalCount) * 100 : 0;
     const estimatedTimeLeft = calculateTimeLeft(processedCount, totalCount, startTime);
     const processingSpeed = calculateSpeed(processedCount, startTime);
-    const estimatedCost = calculateCost(processedCount, costPerToken);
     const estimatedCompletion = calculateCompletion(startTime, processedCount, totalCount);
+
+    const {currentCost, estimatedTotalCost, tokenCounts} = calculateDetailedCost(
+        processedCount,
+        totalCount,
+        modelConfig,
+        activeTemplate,
+        examples
+    );
 
     return (
         <div className="grid grid-cols-3 gap-6">
@@ -180,7 +225,14 @@ const StatusSection: React.FC<StatusSectionProps> = ({
                         </div>
                         <div className="p-2 bg-gray-50 rounded-lg text-center">
                             <p className="text-gray-600 text-sm">Cost</p>
-                            <p className="font-medium">{estimatedCost}</p>
+                            <p className="font-medium">{currentCost}</p>
+                            <p className="text-xs text-gray-500">Est. Total: {estimatedTotalCost}</p>
+                            <div className="text-xs text-gray-500 mt-1">
+                                <div>System: {tokenCounts.systemPromptTokens}</div>
+                                <div>Template: {tokenCounts.templateTokens}</div>
+                                <div>Examples: {tokenCounts.exampleTokens}</div>
+                                <div>Images: {tokenCounts.imageTokens}</div>
+                            </div>
                         </div>
                         <div className="p-2 bg-gray-50 rounded-lg text-center">
                             <p className="text-gray-600 text-sm">Completion</p>

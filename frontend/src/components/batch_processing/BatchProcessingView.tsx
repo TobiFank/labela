@@ -1,6 +1,6 @@
 // frontend/src/components/batch_processing/BatchProcessingView.tsx
 import React, {useState} from 'react';
-import {ModelConfig, ProcessedItem, ProcessingConfig} from '@/lib/types';
+import {ExamplePair, ModelConfig, ProcessedItem, ProcessingConfig, PromptTemplate} from '@/lib/types';
 import StatusSection from './StatusSection';
 import LiveFeed from './LiveFeed';
 import ProcessedGallery from './ProcessedGallery';
@@ -17,6 +17,8 @@ interface BatchProcessingViewProps {
     onResumeProcessing: () => Promise<void>;
     modelConfig: ModelConfig;
     processingConfig: ProcessingConfig;
+    examples: ExamplePair[];
+    activeTemplate: PromptTemplate;
 }
 
 const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
@@ -27,7 +29,9 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                                                                      onStopProcessing,
                                                                      onPauseProcessing,
                                                                      onResumeProcessing,
-                                                                     modelConfig
+                                                                     modelConfig,
+                                                                     examples,
+                                                                     activeTemplate
                                                                  }) => {
     const [selectedImage, setSelectedImage] = useState<ProcessedItem | null>(null);
     const [showFolderSelect, setShowFolderSelect] = useState(false);
@@ -64,7 +68,9 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                     processedCount={processedItems.length}
                     totalCount={totalImageCount}
                     startTime={startTime}
-                    costPerToken={modelConfig.costPerToken}
+                    modelConfig={modelConfig}
+                    activeTemplate={activeTemplate}
+                    examples={examples}
                 />
             </div>
 
@@ -117,6 +123,13 @@ const ImagePreviewModal: React.FC<{
     image: ProcessedItem;
     onClose: () => void;
 }> = ({image, onClose}) => {
+    const getImageUrl = (imagePath: string) => {
+        if (imagePath.startsWith('http')) {
+            return imagePath;
+        }
+        return `http://localhost:8000${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    };
+
     return (
         <div
             className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-6"
@@ -133,7 +146,7 @@ const ImagePreviewModal: React.FC<{
                     </button>
                 </div>
                 <img
-                    src={image.image}
+                    src={getImageUrl(image.image)}
                     alt={image.filename}
                     className="w-full rounded-lg mb-4"
                 />
