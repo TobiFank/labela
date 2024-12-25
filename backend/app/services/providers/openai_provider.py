@@ -4,12 +4,15 @@ import logging
 import os
 from io import BytesIO
 from typing import Optional, List
+
 from PIL import Image
 from openai import AsyncOpenAI
-from ...models import ModelConfig, ExamplePair
+
 from .base_provider import BaseProvider
+from ...models import ModelConfig, ExamplePair
 
 logger = logging.getLogger(__name__)
+
 
 class OpenAIProvider(BaseProvider):
     def __init__(self):
@@ -26,7 +29,8 @@ class OpenAIProvider(BaseProvider):
             logger.error(f"Failed to initialize OpenAI client: {str(e)}")
             raise
 
-    async def generate_caption(self, image: Image.Image, template: Optional[str] = None, examples: Optional[List[ExamplePair]] = None) -> str:
+    async def generate_caption(self, image: Image.Image, template: Optional[str] = None,
+                               examples: Optional[List[ExamplePair]] = None) -> str:
         if not self.client or not self.config:
             logger.error("Provider not configured")
             raise RuntimeError("Provider not configured")
@@ -40,13 +44,15 @@ class OpenAIProvider(BaseProvider):
             }]
 
             # Add examples first if provided
+            logger.info(f"Current directory: {os.getcwd()}")
+            logger.info(f"Directory contents of /data/examples: {os.listdir('/data/examples')}")
+
             if examples:
                 logger.info(f"Processing {len(examples)} example pairs")
                 for i, example in enumerate(examples):
                     try:
-                        logger.info(f"Processing example {i+1}: {example.filename}")
-                        image_path = example.image.replace('http://localhost:8000/api/examples/', '')
-                        image_path = os.path.join('data/examples', image_path)
+                        logger.info(f"Processing example {i + 1}: {example.filename}")
+                        image_path = os.path.join('/data/examples', example.filename)
 
                         if not os.path.exists(image_path):
                             logger.error(f"Example image not found at path: {image_path}")
@@ -89,7 +95,7 @@ class OpenAIProvider(BaseProvider):
                             "content": example.caption
                         })
 
-                        logger.info(f"Added example {i+1} with caption: {example.caption[:100]}...")
+                        logger.info(f"Added example {i + 1} with caption: {example.caption[:100]}...")
 
                     except Exception as e:
                         logger.error(f"Failed to process example {example.filename}: {str(e)}")
