@@ -29,7 +29,7 @@ const ProcessedGallery: React.FC<ProcessedGalleryProps> = ({
             return imagePath;
         }
         // Otherwise, prepend the base URL
-        return `http://localhost:8000${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+        return `http://localhost:8000/api${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     };
 
     return (

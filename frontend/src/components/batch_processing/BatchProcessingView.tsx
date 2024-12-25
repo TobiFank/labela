@@ -127,7 +127,7 @@ const ImagePreviewModal: React.FC<{
         if (imagePath.startsWith('http')) {
             return imagePath;
         }
-        return `http://localhost:8000${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+        return `http://localhost:8000/api${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     };
 
     return (
