@@ -41,7 +41,7 @@ class CaptionService:
         self._examples = []
         self._paused = False
         self._examples_dir = "/data/examples"  # Root data/examples directory
-        self._temp_dir = "/app/backend/data/temp"   # Backend temp directory
+        self._temp_dir = "/app/backend/temp"   # Backend temp directory
 
     def initialize(self):
         self._examples = self.load_examples()
@@ -84,8 +84,8 @@ class CaptionService:
 
         # Create temp directory if it doesn't exist
         try:
-            os.makedirs("data/temp", exist_ok=True)
-            temp_image_path = os.path.join("data/temp", f"temp_{image_file.filename}")
+            os.makedirs(self._temp_dir, exist_ok=True)
+            temp_image_path = os.path.join(self._temp_dir, f"temp_{image_file.filename}")
             logger.info(f"Created temp directory and path: {temp_image_path}")
         except Exception as e:
             logger.error(f"Failed to create temp directory: {str(e)}")

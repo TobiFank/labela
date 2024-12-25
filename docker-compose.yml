@@ -25,7 +25,6 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./data:/data:rw
-      - ./backend/data/temp:/app/backend/data/temp:rw
       - huggingface_cache:/root/.cache/huggingface
     environment:
       - ENVIRONMENT=development

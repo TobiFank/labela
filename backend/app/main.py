@@ -29,8 +29,8 @@ def setup_data_directories():
     # Create root data directories
     root_data_dirs = [
         "/data",           # Root data dir
-        "/data/examples"   # Examples dir
-        "/app/backend/data/temp"  # Temp dir
+        "/data/examples",   # Examples dir
+        "/app/backend/temp"  # Temp dir
     ]
 
     for directory in root_data_dirs:
