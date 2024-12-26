@@ -312,6 +312,8 @@ class CaptionService:
     async def _process_single_image(self, image_path: str, provider) -> ProcessedItem:
         try:
             # Generate caption
+            filename = os.path.basename(image_path)
+            item_id = self._get_item_id(filename)
             image = Image.open(image_path)
             logger.info(f"Processing image {os.path.basename(image_path)} with mode {image.mode}")
 
@@ -344,7 +346,7 @@ class CaptionService:
                 await f.write(caption)
 
             return ProcessedItem(
-                id=len(self._processed_items) + 1,
+                id=item_id,
                 filename=os.path.basename(image_path),
                 image=image_path,
                 caption=caption,
@@ -354,7 +356,7 @@ class CaptionService:
         except Exception as e:
             logger.error(f"Error processing {image_path}: {str(e)}")
             return ProcessedItem(
-                id=len(self._processed_items) + 1,
+                id=item_id,
                 filename=os.path.basename(image_path),
                 image=image_path,
                 caption="",
@@ -606,15 +608,43 @@ class CaptionService:
             # Find the item in the processed items
             item = next((item for item in self._processed_items if item.id == item_id), None)
             if not item:
-                raise ValueError(f"No item found with id {item_id}")
+                for root, _, files in os.walk(self._current_folder):
+                    for filename in files:
+                        if self._get_item_id(filename) == item_id:
+                            image_path = os.path.join(root, filename)
+                            item = ProcessedItem(
+                                id=item_id,
+                                filename=filename,
+                                image=image_path,
+                                caption=new_caption,
+                                timestamp=datetime.now(),
+                                status="success"
+                            )
+                            break
+                if not item:
+                    raise ValueError(f"No item found with id {item_id}")
 
             # Update the caption in the text file
             caption_path = os.path.splitext(item.image)[0] + '.txt'
             with open(caption_path, 'w') as f:
                 f.write(new_caption)
 
-            # Update the item in memory
-            item.caption = new_caption
+            # Create a new item instance with updated caption
+            updated_item = ProcessedItem(
+                id=item.id,
+                filename=item.filename,
+                image=item.image,
+                caption=new_caption,
+                timestamp=item.timestamp,
+                status=item.status,
+                error_message=item.error_message
+            )
+
+            # Update the item in the processed items list
+            self._processed_items = [
+                updated_item if i.id == item_id else i
+                for i in self._processed_items
+            ]
 
             # Update in database if using one
             with self._db as db:
@@ -623,10 +653,22 @@ class CaptionService:
                     db_item.caption = new_caption
                     db.commit()
 
-            return item
+            # Return the full list of processed items to maintain state
+            return updated_item
         except Exception as e:
             logger.error(f"Error updating caption: {str(e)}")
             raise RuntimeError(f"Failed to update caption: {str(e)}")
+
+
+    def _get_item_id(self, filename: str) -> int:
+        """Generate a stable ID for a file"""
+        # Use the same hashing algorithm as the frontend
+        hash_value = 0
+        for char in filename:
+            hash_value = ((hash_value << 5) - hash_value) + ord(char)
+            hash_value = hash_value & 0xFFFFFFFF  # Convert to 32-bit integer
+        return abs(hash_value)
+
 
 
 _caption_service = None

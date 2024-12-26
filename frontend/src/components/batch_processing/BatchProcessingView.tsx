@@ -80,8 +80,9 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
             if (stats.files) {
                 const existingItems = stats.files
                     .filter(file => file.has_caption)
-                    .map((file, index) => ({
-                        id: index + 1,
+                    .map((file) => ({
+                        // Use a stable ID based on the filename
+                        id: hashFilename(file.filename), // We'll create this function
                         filename: file.filename,
                         image: `${folder}/${file.filename}`,
                         caption: file.caption || '',
@@ -89,13 +90,23 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                         status: 'success' as const
                     }));
 
-                // Use the onUpdateProcessedItem prop from parent
                 // Update all processed items at once
                 setProcessedItems(existingItems);
             }
         } catch (error) {
             console.error('Failed to fetch folder stats:', error);
         }
+    };
+
+    const hashFilename = (filename: string): number => {
+        // Simple string hash function
+        let hash = 0;
+        for (let i = 0; i < filename.length; i++) {
+            const char = filename.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        return Math.abs(hash); // Make sure it's positive
     };
 
     const handleStartProcessing = async () => {
