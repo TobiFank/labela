@@ -26,6 +26,7 @@ const AppPage = () => {
         deleteTemplate,
         setActiveTemplate,
         updateProcessedItem,
+        setProcessedItems,
     } = useAppState();
 
     const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -66,6 +67,7 @@ const AppPage = () => {
                     examples={state.examples}
                     activeTemplate={state.activeTemplate}
                     onUpdateProcessedItem={updateProcessedItem}
+                    setProcessedItems={setProcessedItems}
                 />
             ) : null}
 

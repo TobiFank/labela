@@ -21,6 +21,7 @@ interface BatchProcessingViewProps {
     processingConfig: ProcessingConfig;
     examples: ExamplePair[];
     activeTemplate: PromptTemplate;
+    setProcessedItems: (items: ProcessedItem[]) => void;
 }
 
 const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
@@ -34,7 +35,8 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                                                                      modelConfig,
                                                                      examples,
                                                                      activeTemplate,
-                                                                     onUpdateProcessedItem
+                                                                     onUpdateProcessedItem,
+                                                                     setProcessedItems
                                                                  }) => {
     const [selectedImage, setSelectedImage] = useState<ProcessedItem | null>(null);
     const [showFolderSelect, setShowFolderSelect] = useState(false);
@@ -73,6 +75,24 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
         try {
             const stats = await api.getFolderContents(folder);
             setFolderStats(stats);
+
+            // Create ProcessedItem objects from existing captioned files
+            if (stats.files) {
+                const existingItems = stats.files
+                    .filter(file => file.has_caption)
+                    .map((file, index) => ({
+                        id: index + 1,
+                        filename: file.filename,
+                        image: `${folder}/${file.filename}`,
+                        caption: file.caption || '',
+                        timestamp: new Date(file.last_modified).toISOString(),
+                        status: 'success' as const
+                    }));
+
+                // Use the onUpdateProcessedItem prop from parent
+                // Update all processed items at once
+                setProcessedItems(existingItems);
+            }
         } catch (error) {
             console.error('Failed to fetch folder stats:', error);
         }

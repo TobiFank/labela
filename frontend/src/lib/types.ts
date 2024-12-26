@@ -29,6 +29,7 @@ export interface ProcessedItem {
     caption: string;
     timestamp: string;
     status: 'success' | 'error' | 'pending';
+    error_message?: string;
 }
 
 export interface ExamplePair {
@@ -61,6 +62,13 @@ export interface AppState {
     templates: PromptTemplate[];
     activeTemplate: PromptTemplate;
     isPaused: boolean;
+}
+
+export interface FileInfo {
+    filename: string;
+    has_caption: boolean;
+    caption: string | null;
+    last_modified: number;
 }
 
 export function countTokens(template: PromptTemplate, examples: ExamplePair[]): TokenCount {

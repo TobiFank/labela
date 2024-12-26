@@ -1,6 +1,6 @@
 // frontend/src/lib/hooks/useAppState.ts
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {AppState, ModelConfig, ProcessingConfig, PromptTemplate} from '../types';
+import {AppState, ModelConfig, ProcessedItem, ProcessingConfig, PromptTemplate} from '../types';
 import {api} from '../api';
 
 const DEFAULT_MODEL_CONFIG: ModelConfig = {
@@ -325,6 +325,13 @@ export function useAppState() {
         }
     }, []);
 
+    const setProcessedItems = useCallback((items: ProcessedItem[]) => {
+        setState(prev => ({
+            ...prev,
+            processedItems: items
+        }));
+    }, []);
+
     return {
         state,
         setView,
@@ -342,5 +349,6 @@ export function useAppState() {
         deleteTemplate,
         setActiveTemplate,
         updateProcessedItem,
+        setProcessedItems,
     };
 }

@@ -1,8 +1,7 @@
 // frontend/src/components/batch_processing/QuickReview.tsx
-import React, {useState} from 'react';
-import {Check, ChevronLeft, ChevronRight, Edit, Flag} from 'lucide-react';
+import React, {useEffect, useState} from 'react';
+import {Check, ChevronLeft, ChevronRight, Edit} from 'lucide-react';
 import {ProcessedItem} from '@/lib/types';
-import {api} from '@/lib/api';
 
 interface QuickReviewProps {
     items: ProcessedItem[];
@@ -15,12 +14,16 @@ const QuickReview: React.FC<QuickReviewProps> = ({items, onClose, onCaptionUpdat
     const [editMode, setEditMode] = useState(false);
     const [editedCaption, setEditedCaption] = useState(items[0]?.caption || '');
     const [isSaving, setIsSaving] = useState(false);
-    const [updatedItems, setUpdatedItems] = useState<ProcessedItem[]>(items);
+
+    useEffect(() => {
+        if (items[currentIndex]) {
+            setEditedCaption(items[currentIndex].caption);
+        }
+    }, [currentIndex, items]);
 
     const handlePrevious = () => {
         if (currentIndex > 0) {
             setCurrentIndex(currentIndex - 1);
-            setEditedCaption(updatedItems[currentIndex - 1].caption);
             setEditMode(false);
         }
     };
@@ -28,52 +31,33 @@ const QuickReview: React.FC<QuickReviewProps> = ({items, onClose, onCaptionUpdat
     const handleNext = () => {
         if (currentIndex < items.length - 1) {
             setCurrentIndex(currentIndex + 1);
-            setEditedCaption(updatedItems[currentIndex + 1].caption);
             setEditMode(false);
         }
     };
 
-    const handleApproveAndNext = async () => {
-        if (editMode && editedCaption !== updatedItems[currentIndex].caption) {
-            setIsSaving(true);
-            try {
-                await onCaptionUpdate(updatedItems[currentIndex].id, editedCaption);
+    const handleSave = async () => {
+        if (!editMode || editedCaption === items[currentIndex].caption) {
+            return;
+        }
 
-                // Update local state after parent state is updated
-                setUpdatedItems(prevItems =>
-                    prevItems.map(item =>
-                        item.id === updatedItems[currentIndex].id
-                            ? {...item, caption: editedCaption}
-                            : item
-                    )
-                );
-
-                setEditMode(false);
-                handleNext();
-            } catch (error) {
-                console.error('Failed to save caption:', error);
-                alert('Failed to save caption changes. Please try again.');
-            } finally {
-                setIsSaving(false);
-            }
-        } else {
-            handleNext();
+        setIsSaving(true);
+        try {
+            await onCaptionUpdate(items[currentIndex].id, editedCaption);
+            setEditMode(false);
+        } catch (error) {
+            console.error('Failed to save caption:', error);
+            alert('Failed to save caption changes. Please try again.');
+        } finally {
+            setIsSaving(false);
         }
     };
 
-    const getImageUrl = (imagePath: string) => {
-        if (imagePath.startsWith('http')) {
-            return imagePath;
-        }
-        return `http://localhost:8000/api${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
-    };
-
-    const currentItem = updatedItems[currentIndex];
-
+    const currentItem = items[currentIndex];
     if (!currentItem) return null;
 
     return (
         <div className="fixed inset-0 bg-white z-50 p-6">
+            {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-medium">Quick Review Mode</h2>
                 <button
@@ -83,15 +67,15 @@ const QuickReview: React.FC<QuickReviewProps> = ({items, onClose, onCaptionUpdat
                     Exit Review Mode
                 </button>
             </div>
+
+            {/* Main content */}
             <div className="flex flex-col h-[calc(100vh-120px)]">
+                {/* Navigation info */}
                 <div className="flex justify-between items-center mb-4">
                     <span className="text-sm text-gray-600">
                         Reviewing {currentIndex + 1} of {items.length}
                     </span>
                     <div className="flex gap-2">
-                        <button className="p-2 hover:bg-gray-100 rounded-lg">
-                            <Flag className="w-4 h-4 text-gray-600"/>
-                        </button>
                         <button
                             className="p-2 hover:bg-gray-100 rounded-lg"
                             onClick={() => setEditMode(!editMode)}
@@ -101,10 +85,11 @@ const QuickReview: React.FC<QuickReviewProps> = ({items, onClose, onCaptionUpdat
                     </div>
                 </div>
 
+                {/* Image and Caption */}
                 <div className="grid grid-cols-2 gap-4 flex-grow">
-                    <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center h-full">
+                    <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
                         <img
-                            src={getImageUrl(currentItem.image)}
+                            src={`http://localhost:8000/api${currentItem.image}`}
                             alt={currentItem.filename}
                             className="max-w-full max-h-[70vh] object-contain"
                         />
@@ -123,6 +108,7 @@ const QuickReview: React.FC<QuickReviewProps> = ({items, onClose, onCaptionUpdat
                     </div>
                 </div>
 
+                {/* Footer controls */}
                 <div className="flex justify-between items-center mt-4">
                     <button
                         className="p-2 hover:bg-gray-100 rounded-lg"
@@ -132,14 +118,16 @@ const QuickReview: React.FC<QuickReviewProps> = ({items, onClose, onCaptionUpdat
                         <ChevronLeft className="w-5 h-5"/>
                     </button>
 
-                    <button
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 disabled:bg-green-300"
-                        onClick={handleApproveAndNext}
-                        disabled={currentIndex === items.length - 1 || isSaving}
-                    >
-                        <Check className="w-4 h-4"/>
-                        {isSaving ? 'Saving...' : 'Approve & Next'}
-                    </button>
+                    {editMode && (
+                        <button
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 disabled:bg-green-300"
+                            onClick={handleSave}
+                            disabled={isSaving || editedCaption === items[currentIndex].caption}
+                        >
+                            <Check className="w-4 h-4"/>
+                            {isSaving ? 'Saving...' : 'Save Changes'}
+                        </button>
+                    )}
 
                     <button
                         className="p-2 hover:bg-gray-100 rounded-lg"

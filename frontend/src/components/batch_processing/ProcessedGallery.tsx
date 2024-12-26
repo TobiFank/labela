@@ -33,7 +33,7 @@ const ProcessedGallery: React.FC<ProcessedGalleryProps> = ({
     };
 
     return (
-        <Card className="flex-1 flex flex-col">
+        <Card className="flex-1 flex flex-col max-h-[calc(100vh-200px)]">
             <CardHeader>
                 <CardTitle className="flex justify-between items-center">
                     <span>Processed Images</span>
@@ -46,10 +46,10 @@ const ProcessedGallery: React.FC<ProcessedGalleryProps> = ({
                 </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto">
-                <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {items.map((item) => (
-                        <div key={item.id} className="border rounded-lg p-4">
-                            <div className="space-y-4">
+                        <div key={item.id} className="border rounded-lg p-3">
+                            <div className="space-y-3">
                                 {/* Image Preview */}
                                 <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
                                     <img
@@ -60,29 +60,33 @@ const ProcessedGallery: React.FC<ProcessedGalleryProps> = ({
                                     />
                                 </div>
 
-                                {/* Caption & Controls */}
+                                {/* Caption & Info */}
                                 <div>
-                                    <div className="flex justify-between items-start mb-2">
-                                        <span className="font-medium">{item.filename}</span>
-                                        <span className="text-sm text-gray-500">{item.timestamp}</span>
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className="text-sm font-medium truncate">
+                                            {item.filename}
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                            {new Date(item.timestamp).toLocaleTimeString()}
+                                        </span>
                                     </div>
 
                                     {editingCaptionId === item.id ? (
                                         <div className="space-y-2">
                                             <textarea
-                                                className="w-full p-3 border rounded-lg text-sm"
+                                                className="w-full p-2 text-sm border rounded-lg"
                                                 rows={3}
                                                 defaultValue={item.caption}
                                             />
                                             <div className="flex justify-end gap-2">
                                                 <button
-                                                    className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200"
+                                                    className="px-2 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200"
                                                     onClick={() => setEditingCaptionId(null)}
                                                 >
                                                     Cancel
                                                 </button>
                                                 <button
-                                                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                                                    className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                                                     onClick={() => handleCaptionSave(item.id, item.caption)}
                                                 >
                                                     Save
@@ -91,7 +95,9 @@ const ProcessedGallery: React.FC<ProcessedGalleryProps> = ({
                                         </div>
                                     ) : (
                                         <div className="group relative">
-                                            <p className="text-gray-600 pr-8">{item.caption}</p>
+                                            <p className="text-sm text-gray-600 line-clamp-2">
+                                                {item.caption}
+                                            </p>
                                             <button
                                                 className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                                 onClick={() => setEditingCaptionId(item.id)}
@@ -101,6 +107,13 @@ const ProcessedGallery: React.FC<ProcessedGalleryProps> = ({
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Status Indicator */}
+                                {item.status === 'error' && (
+                                    <div className="text-xs text-red-600 mt-1">
+                                        Error: {item.error_message}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}

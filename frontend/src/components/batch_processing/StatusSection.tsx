@@ -2,13 +2,14 @@
 import React from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {AlertCircle, FolderOpen, Pause, Play, RefreshCw, Square} from 'lucide-react';
-import {ExamplePair, ModelConfig, PromptTemplate} from '@/lib/types';
+import {ExamplePair, FileInfo, ModelConfig, PromptTemplate} from '@/lib/types';
 import {calculateCost, countTokens} from '@/lib/utils/tokenCounter';
 
 export interface FolderStats {
     total_images: number;
     captioned: number;
     uncaptioned: number;
+    files: FileInfo[];
 }
 
 interface StatusSectionProps {
@@ -28,6 +29,12 @@ interface StatusSectionProps {
         total_images: number;
         captioned: number;
         uncaptioned: number;
+        files?: {
+            filename: string;
+            has_caption: boolean;
+            caption: string | null;
+            last_modified: number;
+        }[];
     };
     onReprocessAll?: () => void;
 }
