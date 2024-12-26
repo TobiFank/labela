@@ -28,7 +28,7 @@ class ApiClient {
         }
     }
 
-    async startBatchProcessing(folder: string, modelConfig: ModelConfig, processingConfig: ProcessingConfig) {
+    async startBatchProcessing(folder: string, modelConfig: ModelConfig, processingConfig: ProcessingConfig, reprocess: boolean = false) {
         const backendSettings = {
             folder_path: folder,
             model_settings: {
@@ -42,7 +42,8 @@ class ApiClient {
                 batch_size: processingConfig.batchSize,
                 error_handling: processingConfig.errorHandling,
                 concurrent_processing: processingConfig.concurrentProcessing
-            }
+            },
+            reprocess: reprocess
         };
 
         try {

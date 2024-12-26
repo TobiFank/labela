@@ -242,13 +242,14 @@ export function useAppState() {
         };
     }, []);
 
-    const startProcessing = useCallback(async (folder: string) => {
+    const startProcessing = useCallback(async (folder: string, reprocess: boolean = false) => {
         setState(prev => ({...prev, isProcessing: true, isPaused: false}));
         try {
             await api.startBatchProcessing(
                 folder,
                 state.modelConfig,
-                state.processingConfig
+                state.processingConfig,
+                reprocess
             );
 
             const startPolling = () => {

@@ -56,6 +56,7 @@ class BatchProcessingRequest(BaseModelWithConfig):
     folder_path: str
     model_settings: ModelConfig
     processing_settings: Optional[ProcessingConfig] = None
+    reprocess: bool = False
 
 
 class CaptionResponse(BaseModelWithConfig):

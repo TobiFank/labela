@@ -151,7 +151,8 @@ class CaptionService:
             self,
             folder_path: str,
             model_config: ModelConfig,
-            processing_config: Optional[ProcessingConfig] = None
+            processing_config: Optional[ProcessingConfig] = None,
+            reprocess: bool = False
     ):
         """Start batch processing with validation and pre-processing."""
         if self._processing:
@@ -162,11 +163,17 @@ class CaptionService:
             raise RuntimeError(f"Folder not found: {folder_path}")
 
         # Get list of image files
-        image_files = [
-            f for f in os.listdir(folder_path)
-            if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
-               and not os.path.exists(os.path.splitext(os.path.join(folder_path, f))[0] + '.txt')
-        ]
+        if reprocess:
+            image_files = [
+                f for f in os.listdir(folder_path)
+                if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
+            ]
+        else:
+            image_files = [
+                f for f in os.listdir(folder_path)
+                if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
+                   and not os.path.exists(os.path.splitext(os.path.join(folder_path, f))[0] + '.txt')
+            ]
 
         if not image_files:
             raise RuntimeError("No unprocessed images found in folder")

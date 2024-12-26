@@ -113,7 +113,8 @@ async def start_batch_processing(request: BatchProcessingRequest):
         await caption_service.get_caption_service().start_batch_processing(
             folder_path=request.folder_path,
             model_config=request.model_settings,
-            processing_config=request.processing_settings
+            processing_config=request.processing_settings,
+            reprocess=request.reprocess
         )
         return {"message": "Batch processing started"}
     except Exception as e:

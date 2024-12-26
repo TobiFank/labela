@@ -12,7 +12,7 @@ interface BatchProcessingViewProps {
     isProcessing: boolean;
     isPaused: boolean;
     processedItems: ProcessedItem[];
-    onStartProcessing: (folder: string) => Promise<void>;
+    onStartProcessing: (folder: string, reprocess?: boolean) => Promise<void>;
     onStopProcessing: () => Promise<void>;
     onPauseProcessing: () => Promise<void>;
     onResumeProcessing: () => Promise<void>;
@@ -71,7 +71,7 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
     const handleReprocessAll = async () => {
         if (window.confirm('Are you sure you want to reprocess all images? This will overwrite existing captions.')) {
             setStartTime(new Date());
-            await onStartProcessing(sourceFolder);
+            await onStartProcessing(sourceFolder, true);
         }
     };
 
