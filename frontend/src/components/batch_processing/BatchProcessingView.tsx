@@ -84,7 +84,8 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                         filename: file.filename,
                         image: `/data/${folder.split('/').pop()}/${file.filename}`,
                         caption: file.caption || '',
-                        status: 'success' as const
+                        status: 'success' as const,
+                        timestamp: new Date(file.last_modified).toISOString(),
                     }));
 
                 setProcessedItems(existingItems);

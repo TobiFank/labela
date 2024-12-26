@@ -29,6 +29,7 @@ export interface ProcessedItem {
     caption: string;
     status: 'success' | 'error' | 'pending';
     error_message?: string;
+    timestamp: string;
 }
 
 export interface ExamplePair {
