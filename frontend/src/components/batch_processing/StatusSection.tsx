@@ -210,7 +210,15 @@ const StatusSection: React.FC<StatusSectionProps> = ({
                         {showReprocessButton && (
                             <button
                                 className="px-6 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 flex items-center gap-2"
-                                onClick={onReprocessAll}
+                                onClick={() => {
+                                    if (!modelConfig.apiKey) {
+                                        alert("Please configure your API key in the settings panel first.");
+                                        return;
+                                    }
+                                    if (window.confirm('Are you sure you want to reprocess all images? This will overwrite existing captions.')) {
+                                        onReprocessAll?.();
+                                    }
+                                }}
                             >
                                 <RefreshCw className="w-4 h-4"/>
                                 Reprocess All

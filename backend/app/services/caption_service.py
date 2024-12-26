@@ -162,21 +162,29 @@ class CaptionService:
         if not os.path.exists(folder_path):
             raise RuntimeError(f"Folder not found: {folder_path}")
 
+        logger.info(f"Starting batch processing with reprocess={reprocess}")
+        logger.info(f"Processing folder: {folder_path}")
+
         # Get list of image files
+        image_files = []
         if reprocess:
             image_files = [
                 f for f in os.listdir(folder_path)
                 if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
             ]
+            logger.info(f"Reprocess mode: Found {len(image_files)} total images")
         else:
             image_files = [
                 f for f in os.listdir(folder_path)
                 if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
                    and not os.path.exists(os.path.splitext(os.path.join(folder_path, f))[0] + '.txt')
             ]
+            logger.info(f"Normal mode: Found {len(image_files)} uncaptioned images")
 
         if not image_files:
-            raise RuntimeError("No unprocessed images found in folder")
+            error_msg = "No images found to process" if reprocess else "No uncaptioned images found"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
 
         # Initialize processing
         self._current_folder = folder_path
@@ -247,7 +255,6 @@ class CaptionService:
             image_files = [
                 f for f in os.listdir(folder_path)
                 if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
-                   and not os.path.exists(os.path.splitext(os.path.join(folder_path, f))[0] + '.txt')
             ]
 
             total_images = len(image_files)

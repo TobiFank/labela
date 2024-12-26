@@ -44,7 +44,7 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
 
     useEffect(() => {
         const fetchFolderStats = async () => {
-            if (sourceFolder) {
+            if (sourceFolder && !isProcessing) {
                 try {
                     const stats = await api.getFolderContents(sourceFolder);
                     setFolderStats(stats);
@@ -54,13 +54,26 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
             }
         };
 
+        const pollInterval = setInterval(() => {
+            if (isProcessing) {
+                fetchFolderStats();
+            }
+        }, 2000);
+
         fetchFolderStats();
-    }, [sourceFolder]);
+        return () => clearInterval(pollInterval);
+    }, [sourceFolder, isProcessing]);
 
     const handleFolderSelect = async (folder: string, imageCount: number) => {
         setSourceFolder(folder);
         setTotalImageCount(imageCount);
         setShowFolderSelect(false);
+        try {
+            const stats = await api.getFolderContents(folder);
+            setFolderStats(stats);
+        } catch (error) {
+            console.error('Failed to fetch folder stats:', error);
+        }
     };
 
     const handleStartProcessing = async () => {
