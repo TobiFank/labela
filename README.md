@@ -1,107 +1,127 @@
 [![License: Custom Non-Commercial](https://img.shields.io/badge/License-Custom%20Non--Commercial-red.svg)](LICENSE.md)
 
-# Labela: Image Caption Generator
+# Labela: AI Image Captioning Platform
 
-A modern web application for generating and managing image captions using various AI models.
+Labela helps you generate high-quality captions for your images using AI models. It supports both experimenting with individual images and processing entire folders of images in batch.
 
-## Features
+## 🌟 Key Features
 
-- Training data generation interface
-- Batch processing capabilities
-- Multiple AI model support (OpenAI, HuggingFace)
-- Real-time processing status
-- Caption review and editing
-- Cost estimation and tracking
+- Generate captions for single images to test and refine your approach
+- Process entire folders of images in batch
+- Review and edit generated captions
+- Customize prompt templates to guide the AI's output
+- Create example pairs to demonstrate your desired captioning style
+- Supported AI providers: OpenAI
 
-## Prerequisites
+## 🚀 Getting Started
 
-- Docker
-- Docker Compose
-- OpenAI API key (for OpenAI models)
-- HuggingFace API key (for HuggingFace models)
+### Prerequisites
+- Docker and Docker Compose
+- OpenAI API key
 
-## Setup
+### Installation
 
-1. Clone the repository:
+1. Clone the repository and enter the directory:
 ```bash
-git clone [repository-url]
-cd image-caption-generator
+git clone https://github.com/TobiFank/labela.git
+cd labela
 ```
 
-2. Create and configure environment variables:
+2. Create and configure your environment file:
 ```bash
 cp .env.template .env
+# Edit .env and add your OpenAI API key
 ```
-Edit the `.env` file with your API keys and preferences.
 
-3. Build the Docker images (only required for the first time):
+3. Build and start the application:
+
+First time setup:
 ```bash
-docker compose build
+docker compose up --build
 ```
 
-4. Start the application:
+Subsequent runs:
 ```bash
-docker compose up -d
+docker compose up
 ```
 
-The application will be available at:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
+4. Access the application:
+- Web interface: http://localhost:3000
 
-## Project Structure
+## 📁 Working with Images
 
-```
-.
-├── frontend/              # Next.js frontend application
-├── backend/              # FastAPI backend application
-├── data/                 # Data directories
-│   ├── examples/        # Example images and captions
-│   ├── input/          # Input images for processing
-│   └── output/         # Generated captions and metadata
-├── docker-compose.yml    # Docker Compose configuration
-├── .env                 # Environment variables
-└── README.md            # This file
-```
+### Image Organization
+- Place your images in folders within the `/data` directory
+- The `/data/examples` directory is reserved for example pairs, which are automatically stored there
+- Captions are saved as `.txt` files alongside each image in their original folder
 
-## Usage
+### Using the Application
 
-1. Access the web interface at http://localhost:3000
-2. Choose between Training Data Generator or Batch Processing
-3. Configure your settings (API keys, models, etc.)
-4. Start processing images
+#### Test View
+<img src="images/test_view.png" width="800" alt="Test View">
 
-### Training Data Generator
+- Create and manage prompt templates
+- Add example image-caption pairs to guide the AI
+- Test caption generation with individual images
 
-Use this mode to:
-- Upload example pairs
-- Test caption generation
-- Fine-tune prompts
-- Preview model inputs
+#### Batch Processing
+<img src="images/batch_processing_view.png" width="800" alt="Test View">
 
-### Batch Processing
+- Select a folder from your `/data` directory
+- Monitor processing progress and costs
+- Review generated captions in the gallery view
+- Use Quick Review mode to efficiently edit captions
 
-Use this mode to:
-- Process multiple images
-- Monitor progress
-- Review and edit captions
-- Track costs and performance
+#### Quick Review Mode
+<img src="images/review_mode.png" width="800" alt="Test View">
 
-## Development
+- Enter Review Mode from the Batch Processing view
+- Navigate through processed images with keyboard shortcuts
+- View the full image alongside its caption
+- Edit captions directly in the interface
+- Changes are automatically saved to the caption files
+- Exit review mode to return to the gallery view
 
-To modify the application:
 
-1. Frontend changes:
-```bash
-cd frontend
-npm install
-npm run dev
-```
+## System Overview
 
-2. Backend changes:
-```bash
-cd backend
-poetry install
-poetry run uvicorn app.main:app --reload
+```mermaid
+%%{init: {'theme': 'neutral', 'themeVariables': { 'fontSize': '16px'}}}%%
+
+graph TD
+    subgraph Navigation
+        Start[User Opens App] --> Nav{Navigation}
+        Nav -->|Test View| Generator[Generator Mode]
+        Nav -->|Batch Processing| Batch[Batch Processing Mode]
+        Nav -->|Settings| Settings[Global Settings]
+    end
+
+    subgraph Generator["Generator Mode (Test View)"]
+        Generator --> Templates[Manage Templates]
+        Generator --> Examples[Manage Examples]
+        Generator --> SingleTest[Test Single Image]
+        Templates -->|Create/Edit| Template[Prompt Template]
+        Examples -->|Upload| ExamplePair[Image + Caption Pair]
+        SingleTest -->|Generate| Caption[Generated Caption]
+    end
+
+    subgraph Batch["Batch Processing"]
+        Batch --> SelectFolder[Select Source Folder]
+        SelectFolder --> StartProcess[Start Processing]
+        StartProcess --> Monitor[Monitor Progress]
+        Monitor -->|View| Gallery[Processed Gallery]
+        Gallery -->|Review| QuickReview[Quick Review Mode]
+        Monitor -->|Track| Stats[Processing Stats]
+    end
+
+    subgraph Settings
+        Settings --> ModelConfig[Model Settings]
+        Settings --> ProcessConfig[Processing Settings]
+        ModelConfig --> Provider[AI Provider]
+        ModelConfig --> ApiKey[API Keys]
+        ProcessConfig --> BatchSize[Batch Size]
+        ProcessConfig --> ErrorHandling[Error Handling]
+    end
 ```
 
 ## Contributing
