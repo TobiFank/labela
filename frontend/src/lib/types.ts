@@ -23,6 +23,7 @@ export interface TokenCount {
 }
 
 export interface ProcessedItem {
+    timestamp: string;
     id: number;
     image: string;
     filename: string;
