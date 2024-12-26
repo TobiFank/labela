@@ -1,12 +1,12 @@
 // frontend/src/components/batch_processing/BatchProcessingView.tsx
-import React, { useState, useEffect } from 'react';
-import { ExamplePair, ModelConfig, ProcessedItem, ProcessingConfig, PromptTemplate } from '@/lib/types';
+import React, {useEffect, useState} from 'react';
+import {ExamplePair, ModelConfig, ProcessedItem, ProcessingConfig, PromptTemplate} from '@/lib/types';
 import StatusSection, {FolderStats} from './StatusSection';
 import LiveFeed from './LiveFeed';
 import ProcessedGallery from './ProcessedGallery';
 import FolderSelect from './FolderSelect';
 import QuickReview from './QuickReview';
-import { api } from '@/lib/api';
+import {api} from '@/lib/api';
 
 interface BatchProcessingViewProps {
     isProcessing: boolean;
@@ -72,32 +72,30 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
         setSourceFolder(folder);
         setTotalImageCount(imageCount);
         setShowFolderSelect(false);
+
         try {
             const stats = await api.getFolderContents(folder);
-            setFolderStats(stats);
 
-            // Create ProcessedItem objects from existing captioned files
             if (stats.files) {
                 const existingItems = stats.files
                     .filter(file => file.has_caption)
                     .map((file) => ({
-                        // Use a stable ID based on the filename
-                        id: hashFilename(file.filename), // We'll create this function
+                        id: hashFilename(file.filename),
                         filename: file.filename,
-                        image: `${folder}/${file.filename}`,
+                        image: `/data/${folder.split('/').pop()}/${file.filename}`,
                         caption: file.caption || '',
-                        timestamp: new Date(file.last_modified).toISOString(),
                         status: 'success' as const
                     }));
 
-                // Update all processed items at once
                 setProcessedItems(existingItems);
             }
+            setFolderStats(stats);
         } catch (error) {
             console.error('Failed to fetch folder stats:', error);
         }
     };
 
+    // Add this helper function for generating stable IDs
     const hashFilename = (filename: string): number => {
         // Simple string hash function
         let hash = 0;

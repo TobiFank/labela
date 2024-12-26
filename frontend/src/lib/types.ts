@@ -27,7 +27,6 @@ export interface ProcessedItem {
     image: string;
     filename: string;
     caption: string;
-    timestamp: string;
     status: 'success' | 'error' | 'pending';
     error_message?: string;
 }

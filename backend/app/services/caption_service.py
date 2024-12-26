@@ -216,7 +216,7 @@ class CaptionService:
                 'total_images': len(image_files),
                 'captioned': 0,
                 'uncaptioned': 0,
-                'processed_items': []
+                'files': []
             }
 
             # Check each file's caption status
@@ -224,20 +224,15 @@ class CaptionService:
                 image_path = os.path.join(folder_path, image_file)
                 caption_path = os.path.splitext(image_path)[0] + '.txt'
 
-                caption_content = None
                 if os.path.exists(caption_path):
                     with open(caption_path, 'r') as f:
                         caption_content = f.read().strip()
                     folder_stats['captioned'] += 1
-
-                    # Add to processed items
-                    folder_stats['processed_items'].append({
-                        'id': len(folder_stats['processed_items']) + 1,
+                    folder_stats['files'].append({
                         'filename': image_file,
                         'image': image_path,
                         'caption': caption_content,
-                        'timestamp': datetime.fromtimestamp(os.path.getmtime(caption_path)),
-                        'status': 'success'
+                        'has_caption': True
                     })
                 else:
                     folder_stats['uncaptioned'] += 1
