@@ -16,6 +16,7 @@ interface BatchProcessingViewProps {
     onStopProcessing: () => Promise<void>;
     onPauseProcessing: () => Promise<void>;
     onResumeProcessing: () => Promise<void>;
+    onUpdateProcessedItem: (itemId: number, caption: string) => Promise<void>;
     modelConfig: ModelConfig;
     processingConfig: ProcessingConfig;
     examples: ExamplePair[];
@@ -25,14 +26,15 @@ interface BatchProcessingViewProps {
 const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                                                                      isProcessing,
                                                                      isPaused,
-                                                                     processedItems = [],
+                                                                     processedItems,
                                                                      onStartProcessing,
                                                                      onStopProcessing,
                                                                      onPauseProcessing,
                                                                      onResumeProcessing,
                                                                      modelConfig,
                                                                      examples,
-                                                                     activeTemplate
+                                                                     activeTemplate,
+                                                                     onUpdateProcessedItem
                                                                  }) => {
     const [selectedImage, setSelectedImage] = useState<ProcessedItem | null>(null);
     const [showFolderSelect, setShowFolderSelect] = useState(false);
@@ -140,6 +142,7 @@ const BatchProcessingView: React.FC<BatchProcessingViewProps> = ({
                 <QuickReview
                     items={processedItems}
                     onClose={() => setShowQuickReview(false)}
+                    onCaptionUpdate={onUpdateProcessedItem}
                 />
             )}
 

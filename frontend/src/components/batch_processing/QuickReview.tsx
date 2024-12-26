@@ -7,9 +7,10 @@ import {api} from '@/lib/api';
 interface QuickReviewProps {
     items: ProcessedItem[];
     onClose: () => void;
+    onCaptionUpdate: (itemId: number, newCaption: string) => Promise<void>;
 }
 
-const QuickReview: React.FC<QuickReviewProps> = ({items, onClose}) => {
+const QuickReview: React.FC<QuickReviewProps> = ({items, onClose, onCaptionUpdate}) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [editMode, setEditMode] = useState(false);
     const [editedCaption, setEditedCaption] = useState(items[0]?.caption || '');
@@ -36,23 +37,18 @@ const QuickReview: React.FC<QuickReviewProps> = ({items, onClose}) => {
         if (editMode && editedCaption !== updatedItems[currentIndex].caption) {
             setIsSaving(true);
             try {
-                // Update the caption
-                const updatedItem = await api.updateProcessedItemCaption(
-                    updatedItems[currentIndex].id,
-                    editedCaption
-                );
+                await onCaptionUpdate(updatedItems[currentIndex].id, editedCaption);
 
-                // Update local state
+                // Update local state after parent state is updated
                 setUpdatedItems(prevItems =>
                     prevItems.map(item =>
-                        item.id === updatedItem.id ? updatedItem : item
+                        item.id === updatedItems[currentIndex].id
+                            ? {...item, caption: editedCaption}
+                            : item
                     )
                 );
 
-                // Exit edit mode
                 setEditMode(false);
-
-                // Move to next item
                 handleNext();
             } catch (error) {
                 console.error('Failed to save caption:', error);

@@ -614,12 +614,11 @@ class CaptionService:
             item.caption = new_caption
 
             # Update in database if using one
-            if hasattr(self, '_db'):
-                with self._db as db:
-                    db_item = db.query(DBProcessedItem).filter(DBProcessedItem.id == str(item_id)).first()
-                    if db_item:
-                        db_item.caption = new_caption
-                        db.commit()
+            with self._db as db:
+                db_item = db.query(DBProcessedItem).filter(DBProcessedItem.id == str(item_id)).first()
+                if db_item:
+                    db_item.caption = new_caption
+                    db.commit()
 
             return item
         except Exception as e:

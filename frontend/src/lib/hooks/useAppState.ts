@@ -307,6 +307,24 @@ export function useAppState() {
         return caption;
     }, [addExample]);
 
+    const updateProcessedItem = useCallback(async (itemId: number, caption: string) => {
+        try {
+            // Get the updated item from the API response
+            const updatedItem = await api.updateProcessedItemCaption(itemId, caption);
+
+            // Use the entire updated item from the server in our state update
+            setState(prev => ({
+                ...prev,
+                processedItems: prev.processedItems.map(item =>
+                    item.id === itemId ? updatedItem : item
+                )
+            }));
+        } catch (error) {
+            console.error('Failed to update caption:', error);
+            throw error;
+        }
+    }, []);
+
     return {
         state,
         setView,
@@ -323,5 +341,6 @@ export function useAppState() {
         updateTemplate,
         deleteTemplate,
         setActiveTemplate,
+        updateProcessedItem,
     };
 }
