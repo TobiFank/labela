@@ -25,7 +25,7 @@ const Navigation: React.FC<NavigationProps> = ({
                         }`}
                         onClick={() => onViewChange('generator')}
                     >
-                        Training Data Generator
+                        Test View
                     </button>
                     <button
                         className={`px-4 py-2 rounded-lg ${
