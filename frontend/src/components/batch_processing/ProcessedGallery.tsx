@@ -1,7 +1,6 @@
 // frontend/src/components/batch_processing/ProcessedGallery.tsx
-import React, {useState} from 'react';
+import React from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Edit} from 'lucide-react';
 import {ProcessedItem} from '@/lib/types';
 
 interface ProcessedGalleryProps {
@@ -15,13 +14,6 @@ const ProcessedGallery: React.FC<ProcessedGalleryProps> = ({
                                                                onImageSelect,
                                                                onReviewModeToggle,
                                                            }) => {
-    const [editingCaptionId, setEditingCaptionId] = useState<number | null>(null);
-
-    const handleCaptionSave = (id: number, newCaption: string) => {
-        // In a real app, you'd update the caption in your state management
-        console.log('Saving caption:', id, newCaption);
-        setEditingCaptionId(null);
-    };
 
     const getImageUrl = (imagePath: string) => {
         // If the URL is already complete, return it
@@ -70,42 +62,6 @@ const ProcessedGallery: React.FC<ProcessedGalleryProps> = ({
                                             {new Date(item.timestamp).toLocaleTimeString()}
                                         </span>
                                     </div>
-
-                                    {editingCaptionId === item.id ? (
-                                        <div className="space-y-2">
-                                            <textarea
-                                                className="w-full p-2 text-sm border rounded-lg"
-                                                rows={3}
-                                                defaultValue={item.caption}
-                                            />
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    className="px-2 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200"
-                                                    onClick={() => setEditingCaptionId(null)}
-                                                >
-                                                    Cancel
-                                                </button>
-                                                <button
-                                                    className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
-                                                    onClick={() => handleCaptionSave(item.id, item.caption)}
-                                                >
-                                                    Save
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="group relative">
-                                            <p className="text-sm text-gray-600 line-clamp-2">
-                                                {item.caption}
-                                            </p>
-                                            <button
-                                                className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                onClick={() => setEditingCaptionId(item.id)}
-                                            >
-                                                <Edit className="w-4 h-4 text-gray-400 hover:text-gray-600"/>
-                                            </button>
-                                        </div>
-                                    )}
                                 </div>
 
                                 {/* Status Indicator */}
