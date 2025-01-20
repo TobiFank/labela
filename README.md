@@ -1,4 +1,5 @@
 [![License: Custom Non-Commercial](https://img.shields.io/badge/License-Custom%20Non--Commercial-red.svg)](LICENSE.md)
+[![Project Status: Alpha](https://img.shields.io/badge/Project%20Status-Alpha-yellow.svg)](README.md)
 
 # Labela: AI Image Captioning Platform
 
